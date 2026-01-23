@@ -1,0 +1,23 @@
+{
+  "name": "paigram-account-center",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:user": "cd packages/user-app && bun run dev",
+    "dev:admin": "cd packages/admin-app && bun run dev",
+    "build:user": "cd packages/user-app && bun run build",
+    "build:admin": "cd packages/admin-app && bun run build",
+    "build:all": "bun run build:user && bun run build:admin"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.2"
+  }
+}
