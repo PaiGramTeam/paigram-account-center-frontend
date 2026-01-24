@@ -9,6 +9,7 @@ import type {
   RegisterEmailResponse,
   InitiateOAuthRequest,
   InitiateOAuthResponse,
+  OAuthCallbackRequest,
   TelegramAuthData,
   TelegramAuthResponse,
 } from '../types'
@@ -45,7 +46,7 @@ export const authApi = {
   },
 
   // OAuth 回调处理
-  async handleOAuthCallback(provider: string, data: Record<string, unknown>): Promise<LoginResponse> {
+  async handleOAuthCallback(provider: string, data: OAuthCallbackRequest): Promise<LoginResponse> {
     return request.post(`/auth/oauth/${provider}/callback`, data)
   },
 

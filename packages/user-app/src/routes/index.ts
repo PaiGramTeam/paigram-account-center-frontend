@@ -28,6 +28,12 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: { locale: 'common.forgotPassword', requiresAuth: false, hideInMenu: true },
   },
   {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: () => import('@/pages/auth/verify-email.vue'),
+    meta: { locale: 'common.verifyEmail', requiresAuth: false, hideInMenu: true },
+  },
+  {
     path: '/auth/callback/:provider',
     name: 'OAuthCallback',
     component: () => import('@/pages/auth/oauth-callback.vue'),

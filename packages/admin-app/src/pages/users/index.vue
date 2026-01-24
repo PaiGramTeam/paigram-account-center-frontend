@@ -152,7 +152,7 @@
 import { ref, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FormInstance } from '@arco-design/web-vue'
-import { UserTable, UserCard, PageHeader, useUserStore } from '@paigram/shared-components'
+import { UserTable, UserCard, PageHeader, useUserStore, userApi } from '@paigram/shared-components'
 import type { UserDetail, UserListItem } from '@paigram/shared-components'
 
 const userStore = useUserStore()
@@ -290,20 +290,55 @@ const handleSaveUser = async () => {
   const valid = await editFormRef.value?.validate()
   if (!valid) return
 
-  // TODO: 调用 API 保存用户
-  Message.success(editMode.value === 'create' ? '创建成功' : '更新成功')
-  editVisible.value = false
-  userTableRef.value?.refresh()
+  try {
+    if (editMode.value === 'create') {
+      // 创建新用户
+      await userApi.create({
+        email: editForm.email,
+        display_name: editForm.display_name,
+        password: editForm.password,
+        roles: editForm.roles,
+        status: editForm.status as 'active' | 'inactive' | 'pending' | 'suspended',
+      })
+      Message.success('创建成功')
+    } else {
+      // 更新用户
+      if (currentUser.value) {
+        await userApi.update(currentUser.value.id, {
+          display_name: editForm.display_name,
+          roles: editForm.roles,
+          status: editForm.status as 'active' | 'inactive' | 'pending' | 'suspended',
+        })
+        Message.success('更新成功')
+      }
+    }
+    editVisible.value = false
+    userTableRef.value?.refresh()
+  } catch (error) {
+    console.error('保存失败:', error)
+    const errorMessage = error instanceof Error ? error.message : '保存失败，请稍后重试'
+    Message.error(errorMessage)
+  }
 }
 
 // 重置密码
-const handleResetPassword = () => {
-  Message.success('密码重置邮件已发送')
+const handleResetPassword = async () => {
+  if (!currentUser.value) return
+
+  try {
+    await userApi.resetPassword(currentUser.value.id)
+    Message.success('密码重置邮件已发送')
+  } catch (error) {
+    console.error('重置密码失败:', error)
+    const errorMessage = error instanceof Error ? error.message : '重置密码失败'
+    Message.error(errorMessage)
+  }
 }
 
 // 强制登出
 const handleForceLogout = () => {
-  Message.success('已强制用户登出')
+  Message.info('强制登出功能开发中')
+  // TODO: 实现强制登出逻辑
 }
 </script>
 <style scoped></style>

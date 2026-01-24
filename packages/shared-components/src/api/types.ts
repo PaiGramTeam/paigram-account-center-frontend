@@ -59,6 +59,7 @@ export interface UserDetail extends UserInfo {
   login_methods?: LoginType[]
   two_factor_enabled?: boolean
   emails?: EmailData[]
+  primary_login_type?: LoginType
 }
 
 // 用户列表项类型（用于用户管理列表）
@@ -75,6 +76,62 @@ export interface UserListItem {
 
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended'
 export type LoginType = 'email' | 'telegram' | 'google' | 'github'
+
+// 分页参数
+export interface PaginationParams {
+  page?: number
+  page_size?: number
+  sort_by?: string
+  order?: 'asc' | 'desc'
+}
+
+// 用户列表查询参数
+export interface UserListParams extends PaginationParams {
+  status?: UserStatus
+  search?: string
+}
+
+// 分页元数据
+export interface PaginationMeta {
+  page: number
+  page_size: number
+  total: number
+  total_pages: number
+}
+
+// 用户列表响应
+export interface UserListResponse {
+  data: UserListItem[]
+  pagination: PaginationMeta
+}
+
+// 创建用户请求
+export interface CreateUserRequest {
+  email: string
+  display_name: string
+  password: string
+  locale?: string
+  roles?: string[]
+  status?: UserStatus
+}
+
+// 创建用户响应
+export interface CreateUserResponse {
+  data: UserDetail
+}
+
+// 更新用户请求
+export interface UpdateUserRequest {
+  display_name?: string
+  status?: UserStatus
+  roles?: string[]
+  locale?: string
+}
+
+// 更新用户响应
+export interface UpdateUserResponse {
+  data: UserDetail
+}
 
 // 刷新 Token 请求
 export interface RefreshTokenRequest {
@@ -158,6 +215,16 @@ export interface InitiateOAuthResponse {
   }
 }
 
+export interface OAuthCallbackRequest {
+  state: string
+  provider_account_id: string
+  code?: string
+  display_name?: string
+  email?: string
+  email_verified?: boolean
+  avatar_url?: string
+}
+
 // Telegram Auth
 export interface TelegramAuthData {
   id: number
@@ -180,5 +247,282 @@ export interface TelegramAuthResponse {
     email?: string
     avatar_url?: string
     status: string
+  }
+}
+
+// 账号绑定相关类型
+export interface BoundAccount {
+  provider: string
+  provider_account_id: string
+  display_name?: string
+  avatar_url?: string
+  email?: string
+  bound_at: string
+  last_used_at?: string
+  is_primary?: boolean
+}
+
+export interface PaginatedResponse<T> {
+  code?: number
+  message?: string
+  data: {
+    data: T[]
+    pagination: {
+      page: number
+      page_size: number
+      total: number
+      total_pages: number
+    }
+  }
+}
+
+export interface BindAccountRequest {
+  provider: string
+  provider_data: Record<string, unknown>
+}
+
+export interface BindAccountResponse {
+  data: {
+    provider: string
+    provider_account_id: string
+    bound_at: string
+  }
+}
+
+export interface UnbindAccountResponse {
+  data: {
+    message: string
+  }
+}
+
+// 安全设置相关类型
+
+// 修改密码请求
+export interface ChangePasswordRequest {
+  old_password: string
+  new_password: string
+}
+
+// 修改密码响应
+export interface ChangePasswordResponse {
+  data: {
+    message: string
+  }
+}
+
+// 启用 2FA 响应
+export interface Enable2FAResponse {
+  data: {
+    qr_code: string // Base64 编码的 QR 码图片
+    secret: string // TOTP 密钥
+    backup_codes: string[] // 备用恢复码
+  }
+}
+
+// 确认启用 2FA 请求
+export interface Confirm2FARequest {
+  code: string // TOTP 验证码
+  secret: string // TOTP 密钥
+}
+
+// 确认启用 2FA 响应
+export interface Confirm2FAResponse {
+  data: {
+    message: string
+    backup_codes: string[]
+  }
+}
+
+// 禁用 2FA 请求
+export interface Disable2FARequest {
+  password: string // 用户密码
+  code: string // 当前的 TOTP 验证码
+}
+
+// 禁用 2FA 响应
+export interface Disable2FAResponse {
+  data: {
+    message: string
+  }
+}
+
+// 设备信息
+export interface Device {
+  device_id: string // 设备唯一标识符
+  device_name: string // 设备显示名称，如 "Chrome 120.0 / Windows"
+  device_type?: string // 设备类型，如 "desktop", "mobile"
+  browser?: string // 浏览器名称
+  os?: string // 操作系统
+  ip: string // IP 地址
+  location?: string // 地理位置，如 "Beijing, China"
+  last_active_at: string // 最后活跃时间
+  is_current: boolean // 是否是当前设备
+  trust_expiry?: string // 信任过期时间（如果设备被信任）
+}
+
+// 获取设备列表响应
+export interface DevicesResponse {
+  data: {
+    data: Device[]
+  }
+}
+
+// 移除设备响应
+export interface RemoveDeviceResponse {
+  data: {
+    message: string
+  }
+}
+
+// 角色管理相关类型
+
+// 角色列表项类型
+export interface RoleListItem {
+  id: number
+  name: string
+  display_name: string
+  description: string
+  permission_count: number
+  user_count: number
+  created_at: string
+}
+
+// 角色详情类型
+export interface RoleDetail {
+  id: number
+  name: string
+  display_name: string
+  description: string
+  permission_count: number
+  user_count: number
+  created_at: string
+  updated_at: string
+}
+
+// 角色列表查询参数
+export interface RoleListParams extends PaginationParams {
+  // 可以根据需要添加其他筛选参数
+}
+
+// 角色列表响应
+export interface RoleListResponse {
+  data: RoleListItem[]
+  pagination: PaginationMeta
+}
+
+// 创建角色请求
+export interface CreateRoleRequest {
+  name: string
+  display_name: string
+  description?: string
+}
+
+// 创建角色响应
+export interface CreateRoleResponse {
+  data: RoleDetail
+}
+
+// 更新角色请求
+export interface UpdateRoleRequest {
+  display_name?: string
+  description?: string
+}
+
+// 更新角色响应
+export interface UpdateRoleResponse {
+  data: RoleDetail
+}
+
+// 删除角色响应
+export interface DeleteRoleResponse {
+  data: {
+    message: string
+  }
+}
+
+// 角色详情响应
+export interface RoleDetailResponse {
+  data: RoleDetail
+}
+
+// 权限管理相关类型
+
+// 权限列表项类型
+export interface PermissionListItem {
+  id: number
+  name: string // 权限唯一标识，如 "user.read"
+  display_name: string // 显示名称，如 "查看用户"
+  description: string // 权限描述
+  category: string // 权限分类，如 "user_management"
+}
+
+// 权限详情类型
+export interface PermissionDetail {
+  id: number
+  name: string
+  display_name: string
+  description: string
+  category: string
+  created_at: string
+  updated_at: string
+}
+
+// 权限列表查询参数
+export interface PermissionListParams extends PaginationParams {
+  category?: string // 按分类筛选
+}
+
+// 权限列表响应
+export interface PermissionListResponse {
+  data: PermissionListItem[]
+  pagination: PaginationMeta
+}
+
+// 权限详情响应
+export interface PermissionDetailResponse {
+  data: PermissionDetail
+}
+
+// 创建权限请求
+export interface CreatePermissionRequest {
+  name: string
+  display_name: string
+  description?: string
+  category: string
+}
+
+// 创建权限响应
+export interface CreatePermissionResponse {
+  data: PermissionDetail
+}
+
+// 更新权限请求
+export interface UpdatePermissionRequest {
+  display_name?: string
+  description?: string
+  category?: string
+}
+
+// 更新权限响应
+export interface UpdatePermissionResponse {
+  data: PermissionDetail
+}
+
+// 删除权限响应
+export interface DeletePermissionResponse {
+  data: {
+    message: string
+  }
+}
+
+// 分配权限给角色请求
+export interface AssignPermissionRequest {
+  permission_id: number
+}
+
+// 分配权限给角色响应
+export interface AssignPermissionResponse {
+  data: {
+    message: string
   }
 }

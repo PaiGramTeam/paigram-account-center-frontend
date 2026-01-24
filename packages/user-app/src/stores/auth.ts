@@ -6,6 +6,7 @@ import type {
   LoginEmailRequest,
   RegisterEmailRequest,
   RegisterEmailResponse,
+  OAuthCallbackRequest,
   UserStatus,
 } from '@paigram/shared-components'
 
@@ -175,16 +176,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     // 处理 OAuth 回调
-    async handleOAuthCallback(provider: string, code: string, state: string): Promise<void> {
+    async handleOAuthCallback(provider: string, callbackData: OAuthCallbackRequest): Promise<void> {
       this.loading = true
       const userStore = useUserStore()
 
       try {
-        const response = await authApi.handleOAuthCallback(provider, {
-          code,
-          state,
-          provider_account_id: '', // 这个会从 OAuth 提供商获取
-        })
+        const response = await authApi.handleOAuthCallback(provider, callbackData)
 
         // 保存认证信息
         userStore.setAuthData({
@@ -198,7 +195,9 @@ export const useAuthStore = defineStore('auth', {
         this.loginType = 'oauth'
         Message.success('登录成功')
       } catch (error) {
-        Message.error('OAuth 登录失败')
+        console.error('OAuth callback error:', error)
+        const err = error as { error?: string; message?: string }
+        Message.error(err.error || err.message || 'OAuth 登录失败')
         throw error
       } finally {
         this.loading = false

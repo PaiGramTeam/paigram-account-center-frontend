@@ -159,7 +159,7 @@ import {
   IconDown,
 } from '@arco-design/web-vue/es/icon'
 import { userApi } from '../../api'
-import type { UserInfo } from '../../api/types'
+import type { UserListItem } from '../../api/types'
 
 interface Props {
   // 功能开关
@@ -195,11 +195,11 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits<{
-  view: [user: UserInfo]
-  edit: [user: UserInfo]
+  view: [user: UserListItem]
+  edit: [user: UserListItem]
   create: []
-  delete: [user: UserInfo]
-  'batch-delete': [users: UserInfo[]]
+  delete: [user: UserListItem]
+  'batch-delete': [users: UserListItem[]]
   refresh: []
 }>()
 
@@ -212,7 +212,7 @@ const searchForm = reactive({
 
 // 表格数据
 const loading = ref(false)
-const tableData = ref<UserInfo[]>([])
+const tableData = ref<UserListItem[]>([])
 const selectedKeys = ref<(string | number)[]>([])
 
 // 分页配置
@@ -280,13 +280,13 @@ const tableColumns = computed<TableColumnData[]>(() => {
       title: '注册时间',
       dataIndex: 'created_at',
       width: 180,
-      render: ({ record }: { record: UserInfo }) => formatDate(record.created_at),
+      render: ({ record }: { record: UserListItem }) => formatDate(record.created_at),
     },
     last_login_at: {
       title: '最后登录',
       dataIndex: 'last_login_at',
       width: 180,
-      render: ({ record }: { record: UserInfo }) => formatDate(record.last_login_at),
+      render: ({ record }: { record: UserListItem }) => formatDate(record.last_login_at),
     },
     action: {
       title: '操作',
@@ -331,10 +331,16 @@ const formatDate = (date?: string): string => {
 const fetchUsers = async () => {
   loading.value = true
   try {
-    // TODO: 添加搜索参数
-    const response = await userApi.getList()
+    const params = {
+      page: pagination.current,
+      page_size: pagination.pageSize,
+      search: searchForm.keyword || undefined,
+      status: searchForm.status,
+    }
+
+    const response = await userApi.getList(params)
     tableData.value = response.data
-    pagination.total = response.data.length
+    pagination.total = response.pagination.total
   } catch (_error) {
     Message.error('获取用户列表失败')
   } finally {
@@ -376,12 +382,12 @@ const handlePageSizeChange = (pageSize: number) => {
 }
 
 // 处理查看
-const handleView = (record: UserInfo) => {
+const handleView = (record: UserListItem) => {
   emit('view', record)
 }
 
 // 处理编辑
-const handleEdit = (record: UserInfo) => {
+const handleEdit = (record: UserListItem) => {
   emit('edit', record)
 }
 
@@ -391,7 +397,7 @@ const handleCreate = () => {
 }
 
 // 处理删除
-const handleDelete = (record: UserInfo) => {
+const handleDelete = (record: UserListItem) => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除用户 "${record.display_name}" 吗？`,
@@ -426,7 +432,7 @@ const handleBatchDelete = () => {
 }
 
 // 处理重置密码
-const handleResetPassword = (record: UserInfo) => {
+const handleResetPassword = (record: UserListItem) => {
   Modal.confirm({
     title: '重置密码',
     content: `确定要重置用户 "${record.display_name}" 的密码吗？`,
@@ -439,7 +445,7 @@ const handleResetPassword = (record: UserInfo) => {
 }
 
 // 处理切换状态
-const handleToggleStatus = (record: UserInfo) => {
+const handleToggleStatus = (record: UserListItem) => {
   const action = record.status === 'active' ? '停用' : '激活'
   Modal.confirm({
     title: `${action}用户`,
