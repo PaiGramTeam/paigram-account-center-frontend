@@ -2,55 +2,39 @@
   <div class="dashboard-page">
     <div class="mb-6">
       <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">
-        欢迎回来，{{ userStore.nickname || userStore.username || '用户' }}
+        欢迎回来，{{ userStore.displayName || '用户' }}
       </h1>
-      <p class="mt-2 text-gray-600 dark:text-gray-400">
-        这是您的账号中心控制台，您可以在这里管理您的账号信息
-      </p>
+      <p class="mt-2 text-gray-600 dark:text-gray-400">这是您的账号中心控制台，您可以在这里管理您的账号信息</p>
     </div>
-    
+
     <!-- 统计卡片 -->
     <a-row :gutter="16" class="mb-6">
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="绑定账号"
-          :value="stats.bindingCount"
-          :value-style="{ color: '#165DFF' }"
-        >
+        <a-statistic title="绑定账号" :value="stats.bindingCount" :value-style="{ color: '#165DFF' }">
           <template #suffix>
             <icon-link />
           </template>
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="安全评分"
-          :value="stats.securityScore"
-          suffix="%"
-          :value-style="{ color: '#00B42A' }"
-        >
+        <a-statistic title="安全评分" :value="stats.securityScore" suffix="%" :value-style="{ color: '#00B42A' }">
           <template #suffix>
             <icon-safe />
           </template>
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="登录次数"
-          :value="stats.loginCount"
-          :value-style="{ color: '#F53F3F' }"
-        >
+        <a-statistic title="登录次数" :value="stats.loginCount" :value-style="{ color: '#F53F3F' }">
           <template #suffix>
             <icon-user />
           </template>
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="最后登录"
-          :value="formatRelativeTime(stats.lastLoginTime)"
-          :value-style="{ color: '#FF7D00' }"
-        >
+        <a-statistic title="最后登录" :value-style="{ color: '#FF7D00' }">
+          <template #value>
+            {{ formatRelativeTime(stats.lastLoginTime) }}
+          </template>
           <template #suffix>
             <icon-clock-circle />
           </template>
@@ -58,7 +42,7 @@
       </a-col>
     </a-row>
 
-    <a-row :gutter="16}>
+    <a-row :gutter="16">
       <!-- 账号信息 -->
       <a-col :xs="24" :lg="16">
         <a-card title="账号信息" class="mb-6">
@@ -77,10 +61,10 @@
                   {{ userStore.userId || '-' }}
                 </a-descriptions-item>
                 <a-descriptions-item label="用户名">
-                  {{ userStore.username || '-' }}
+                  {{ userStore.displayName || '-' }}
                 </a-descriptions-item>
                 <a-descriptions-item label="邮箱">
-                  {{ userStore.userInfo?.email || '-' }}
+                  {{ userStore.userInfo?.primary_email || '-' }}
                 </a-descriptions-item>
                 <a-descriptions-item label="账号状态">
                   <a-tag :color="getStatusColor(userStore.userInfo?.status)">
@@ -163,44 +147,42 @@
               content="建议您设置一个更复杂的密码"
               closable
             />
-            <a-alert
-              v-if="!hasTwoFactor"
-              type="info" 
-              title="开启双因素认证"
-              content="提高账号安全性"
-              closable
-            />
+            <a-alert v-if="!hasTwoFactor" type="info" title="开启双因素认证" content="提高账号安全性" closable />
           </a-space>
         </a-card>
       </a-col>
     </a-row>
-    
+
     <!-- 最近活动 -->
     <a-card title="最近活动">
       <a-timeline>
         <a-timeline-item v-for="activity in recentActivities" :key="activity.id">
           <div class="text-sm">
             <div class="font-medium">{{ activity.action }}</div>
-            <div class="text-gray-500">
-              {{ formatDate(activity.time) }} · {{ activity.location }}
-            </div>
+            <div class="text-gray-500">{{ formatDate(activity.time) }} · {{ activity.location }}</div>
           </div>
         </a-timeline-item>
       </a-timeline>
       <a-divider />
-      <a-button long @click="$router.push('/account/logs')">
-        查看所有活动记录
-      </a-button>
+      <a-button long @click="$router.push('/account/logs')"> 查看所有活动记录 </a-button>
     </a-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { useUserStore } from '@paigram/shared-components'
-import { profileApi } from '@/api'
+import {
+  IconLink,
+  IconSafe,
+  IconUser,
+  IconClockCircle,
+  IconEdit,
+  IconCamera,
+  IconSettings,
+} from '@arco-design/web-vue/es/icon'
+import { useUserStore, profileApi } from '@paigram/shared-components'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -210,7 +192,7 @@ const stats = reactive({
   bindingCount: 3,
   securityScore: 85,
   loginCount: 128,
-  lastLoginTime: new Date()
+  lastLoginTime: new Date(),
 })
 
 // 安全状态
@@ -223,16 +205,16 @@ const recentActivities = ref([
   { id: 2, action: '修改密码', time: new Date(Date.now() - 172800000), location: '上海' },
   { id: 3, action: '绑定邮箱', time: new Date(Date.now() - 345600000), location: '广州' },
   { id: 4, action: '更新个人信息', time: new Date(Date.now() - 518400000), location: '深圳' },
-  { id: 5, action: '开启登录保护', time: new Date(Date.now() - 691200000), location: '杭州' }
+  { id: 5, action: '开启登录保护', time: new Date(Date.now() - 691200000), location: '杭州' },
 ])
 
 // 获取状态颜色
 const getStatusColor = (status?: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-    inactive: 'orange', 
+    inactive: 'orange',
     suspended: 'red',
-    pending: 'blue'
+    pending: 'blue',
   }
   return colorMap[status || ''] || 'gray'
 }
@@ -243,7 +225,7 @@ const getStatusText = (status?: string): string => {
     active: '正常',
     inactive: '未激活',
     suspended: '已停用',
-    pending: '待审核'
+    pending: '待审核',
   }
   return textMap[status || ''] || '未知'
 }
@@ -257,7 +239,7 @@ const formatDate = (date?: string | Date): string => {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
 }
 
@@ -267,7 +249,7 @@ const formatRelativeTime = (date: Date): string => {
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
-  
+
   if (minutes < 1) return '刚刚'
   if (minutes < 60) return `${minutes}分钟前`
   if (hours < 24) return `${hours}小时前`
@@ -293,12 +275,14 @@ const loadUserData = async (): Promise<void> => {
       // 更新用户信息
       userStore.setUserInfo({
         id: response.data.user_id,
-        username: response.data.display_name,
-        nickname: response.data.display_name,
-        email: response.data.primary_email,
-        avatar: response.data.avatar_url,
+        display_name: response.data.display_name,
+        primary_email: response.data.primary_email,
+        avatar_url: response.data.avatar_url,
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         roles: [],
-        permissions: []
+        permissions: [],
       })
     } catch (error) {
       console.error('Failed to load user profile:', error)
@@ -313,7 +297,7 @@ onMounted(() => {
     router.push('/login')
     return
   }
-  
+
   loadUserData()
 })
 </script>

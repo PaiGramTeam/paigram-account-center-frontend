@@ -16,11 +16,7 @@
           </a-col>
           <a-col :span="6">
             <a-form-item field="status" label="状态">
-              <a-select
-                v-model="searchForm.status"
-                placeholder="选择状态"
-                allow-clear
-              >
+              <a-select v-model="searchForm.status" placeholder="选择状态" allow-clear>
                 <a-option value="active">正常</a-option>
                 <a-option value="inactive">未激活</a-option>
                 <a-option value="suspended">已停用</a-option>
@@ -30,10 +26,7 @@
           </a-col>
           <a-col :span="6">
             <a-form-item field="dateRange" label="注册时间">
-              <a-range-picker
-                v-model="searchForm.dateRange"
-                :shortcuts="dateShortcuts"
-              />
+              <a-range-picker v-model="searchForm.dateRange" :shortcuts="dateShortcuts" />
             </a-form-item>
           </a-col>
           <a-col :span="6" class="text-right">
@@ -53,7 +46,7 @@
 
     <!-- 表格操作栏 -->
     <a-card>
-      <div v-if="showActions" class="mb-4 flex justify-between items-center">
+      <div v-if="showActions" class="mb-4 flex items-center justify-between">
         <a-space>
           <a-button v-if="canCreate" type="primary" @click="handleCreate">
             <template #icon>
@@ -68,7 +61,7 @@
             批量删除 ({{ selectedKeys.length }})
           </a-button>
         </a-space>
-        
+
         <a-space>
           <a-button @click="handleExport">
             <template #icon>
@@ -130,47 +123,19 @@
         <!-- 操作列 -->
         <template #action="{ record }">
           <a-space>
-            <a-button
-              v-if="canView"
-              type="text"
-              size="small"
-              @click="handleView(record)"
-            >
-              查看
-            </a-button>
-            <a-button
-              v-if="canEdit"
-              type="text"
-              size="small"
-              @click="handleEdit(record)"
-            >
-              编辑
-            </a-button>
+            <a-button v-if="canView" type="text" size="small" @click="handleView(record)"> 查看 </a-button>
+            <a-button v-if="canEdit" type="text" size="small" @click="handleEdit(record)"> 编辑 </a-button>
             <a-dropdown v-if="canDelete || canResetPassword || canToggleStatus">
               <a-button type="text" size="small">
                 更多
                 <icon-down />
               </a-button>
               <template #content>
-                <a-doption
-                  v-if="canResetPassword"
-                  @click="handleResetPassword(record)"
-                >
-                  重置密码
-                </a-doption>
-                <a-doption
-                  v-if="canToggleStatus"
-                  @click="handleToggleStatus(record)"
-                >
+                <a-doption v-if="canResetPassword" @click="handleResetPassword(record)"> 重置密码 </a-doption>
+                <a-doption v-if="canToggleStatus" @click="handleToggleStatus(record)">
                   {{ record.status === 'active' ? '停用' : '激活' }}
                 </a-doption>
-                <a-doption
-                  v-if="canDelete"
-                  class="text-red-500"
-                  @click="handleDelete(record)"
-                >
-                  删除
-                </a-doption>
+                <a-doption v-if="canDelete" class="text-red-500" @click="handleDelete(record)"> 删除 </a-doption>
               </template>
             </a-dropdown>
           </a-space>
@@ -181,9 +146,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import type { TableColumnData, TableRowSelection } from '@arco-design/web-vue'
+import {
+  IconSearch,
+  IconPlus,
+  IconDelete,
+  IconExport,
+  IconRefresh,
+  IconUser,
+  IconDown,
+} from '@arco-design/web-vue/es/icon'
 import { userApi } from '../../api'
 import type { UserInfo } from '../../api/types'
 
@@ -191,7 +165,7 @@ interface Props {
   // 功能开关
   showSearch?: boolean
   showActions?: boolean
-  
+
   // 权限控制
   canView?: boolean
   canEdit?: boolean
@@ -200,7 +174,7 @@ interface Props {
   canBatchDelete?: boolean
   canResetPassword?: boolean
   canToggleStatus?: boolean
-  
+
   // 表格配置
   pageSize?: number
   columns?: string[]
@@ -217,23 +191,23 @@ const props = withDefaults(defineProps<Props>(), {
   canResetPassword: true,
   canToggleStatus: true,
   pageSize: 20,
-  columns: () => ['user', 'status', 'roles', 'created_at', 'action']
+  columns: () => ['user', 'status', 'roles', 'created_at', 'action'],
 })
 
 const emit = defineEmits<{
-  'view': [user: UserInfo]
-  'edit': [user: UserInfo]
-  'create': []
-  'delete': [user: UserInfo]
+  view: [user: UserInfo]
+  edit: [user: UserInfo]
+  create: []
+  delete: [user: UserInfo]
   'batch-delete': [users: UserInfo[]]
-  'refresh': []
+  refresh: []
 }>()
 
 // 搜索表单
 const searchForm = reactive({
   keyword: '',
   status: undefined,
-  dateRange: undefined
+  dateRange: undefined,
 })
 
 // 表格数据
@@ -248,7 +222,7 @@ const pagination = reactive({
   total: 0,
   showTotal: true,
   showJumper: true,
-  showPageSize: true
+  showPageSize: true,
 })
 
 // 日期快捷选项
@@ -260,7 +234,7 @@ const dateShortcuts = [
       const start = new Date()
       start.setDate(start.getDate() - 7)
       return [start, end]
-    }
+    },
   },
   {
     label: '最近30天',
@@ -269,18 +243,18 @@ const dateShortcuts = [
       const start = new Date()
       start.setDate(start.getDate() - 30)
       return [start, end]
-    }
-  }
+    },
+  },
 ]
 
 // 行选择配置
 const rowSelection = computed<TableRowSelection | undefined>(() => {
   if (!props.canBatchDelete) return undefined
-  
+
   return {
     type: 'checkbox',
     showCheckedAll: true,
-    onlyCurrent: false
+    onlyCurrent: false,
   }
 })
 
@@ -290,41 +264,39 @@ const tableColumns = computed<TableColumnData[]>(() => {
     user: {
       title: '用户',
       slotName: 'user',
-      width: 250
+      width: 250,
     },
     status: {
       title: '状态',
       slotName: 'status',
-      width: 100
+      width: 100,
     },
     roles: {
       title: '角色',
       slotName: 'roles',
-      width: 200
+      width: 200,
     },
     created_at: {
       title: '注册时间',
       dataIndex: 'created_at',
       width: 180,
-      render: ({ record }) => formatDate(record.created_at)
+      render: ({ record }: { record: UserInfo }) => formatDate(record.created_at),
     },
     last_login_at: {
       title: '最后登录',
       dataIndex: 'last_login_at',
       width: 180,
-      render: ({ record }) => formatDate(record.last_login_at)
+      render: ({ record }: { record: UserInfo }) => formatDate(record.last_login_at),
     },
     action: {
       title: '操作',
       slotName: 'action',
       fixed: 'right',
-      width: 150
-    }
+      width: 150,
+    },
   }
-  
-  return props.columns
-    .map(col => allColumns[col])
-    .filter(Boolean)
+
+  return props.columns.map((col) => allColumns[col]).filter(Boolean)
 })
 
 // 获取状态颜色
@@ -333,7 +305,7 @@ const getStatusColor = (status: string): string => {
     active: 'green',
     inactive: 'orange',
     suspended: 'red',
-    pending: 'blue'
+    pending: 'blue',
   }
   return colorMap[status] || 'gray'
 }
@@ -344,7 +316,7 @@ const getStatusText = (status: string): string => {
     active: '正常',
     inactive: '未激活',
     suspended: '已停用',
-    pending: '待审核'
+    pending: '待审核',
   }
   return textMap[status] || '未知'
 }
@@ -363,7 +335,7 @@ const fetchUsers = async () => {
     const response = await userApi.getList()
     tableData.value = response.data
     pagination.total = response.data.length
-  } catch (error) {
+  } catch (_error) {
     Message.error('获取用户列表失败')
   } finally {
     loading.value = false
@@ -430,16 +402,14 @@ const handleDelete = (record: UserInfo) => {
       emit('delete', record)
       Message.success('删除成功')
       fetchUsers()
-    }
+    },
   })
 }
 
 // 处理批量删除
 const handleBatchDelete = () => {
-  const selectedUsers = tableData.value.filter(user => 
-    selectedKeys.value.includes(user.id)
-  )
-  
+  const selectedUsers = tableData.value.filter((user) => selectedKeys.value.includes(user.id))
+
   Modal.confirm({
     title: '批量删除确认',
     content: `确定要删除选中的 ${selectedUsers.length} 个用户吗？`,
@@ -451,7 +421,7 @@ const handleBatchDelete = () => {
       Message.success('批量删除成功')
       selectedKeys.value = []
       fetchUsers()
-    }
+    },
   })
 }
 
@@ -464,7 +434,7 @@ const handleResetPassword = (record: UserInfo) => {
     cancelText: '取消',
     onOk: () => {
       Message.success('密码重置邮件已发送')
-    }
+    },
   })
 }
 
@@ -479,7 +449,7 @@ const handleToggleStatus = (record: UserInfo) => {
     onOk: () => {
       Message.success(`${action}成功`)
       fetchUsers()
-    }
+    },
   })
 }
 
@@ -495,6 +465,6 @@ onMounted(() => {
 
 // 暴露方法
 defineExpose({
-  refresh: fetchUsers
+  refresh: fetchUsers,
 })
 </script>

@@ -21,17 +21,17 @@ export const useMenuGeneration = () => {
     if (!meta) return true
 
     // 检查角色权限
-    if (meta.roles && meta.roles.length > 0) {
-      const hasRole = meta.roles.some((role: string) => userStore.hasRole(role))
+    const roles = meta.roles as string[] | undefined
+    if (roles && roles.length > 0) {
+      const hasRole = roles.some((role: string) => userStore.hasRole(role))
       if (!hasRole) return false
     }
 
     // 检查具体权限
-    if (meta.permissions && meta.permissions.length > 0) {
-      const hasPermission = meta.permissions.some((permission: string) => 
-        userStore.hasPermission(permission)
-      )
-      if (!hasPermission) return false
+    const permissions = meta.permissions as string[] | undefined
+    if (permissions && permissions.length > 0) {
+      const hasPerm = permissions.some((permission: string) => userStore.hasPermission(permission))
+      if (!hasPerm) return false
     }
 
     return true
@@ -55,9 +55,9 @@ export const useMenuGeneration = () => {
       name: route.name as string,
       meta: {
         ...route.meta,
-        title: route.meta?.title || route.name as string,
-        locale: route.meta?.locale
-      }
+        title: (route.meta?.title as string) || (route.name as string),
+        locale: route.meta?.locale as string | undefined,
+      },
     }
 
     // 处理子路由
@@ -69,7 +69,7 @@ export const useMenuGeneration = () => {
           children.push(childItem)
         }
       }
-      
+
       // 如果有子菜单项，添加到菜单项中
       if (children.length > 0) {
         // 如果设置了 hideChildrenInMenu，则不显示子菜单
@@ -92,7 +92,7 @@ export const useMenuGeneration = () => {
    */
   const generateMenuFromRoutes = (routes: RouteRecordRaw[]): MenuItem[] => {
     const menuItems: MenuItem[] = []
-    
+
     for (const route of routes) {
       const menuItem = routeToMenuItem(route)
       if (menuItem) {
@@ -114,10 +114,11 @@ export const useMenuGeneration = () => {
   const menuItems = computed(() => {
     const routes = router.getRoutes()
     // 过滤出顶级路由（通常是 Layout 路由的子路由）
-    const topLevelRoutes = routes
-      .filter(route => route.meta?.requiresAuth !== false) // 排除不需要认证的路由
-      .filter(route => route.path === '/' || route.path.indexOf('/') === 0) // 顶级路由
-      .find(route => route.name === 'Layout')?.children || []
+    const topLevelRoutes =
+      routes
+        .filter((route) => route.meta?.requiresAuth !== false) // 排除不需要认证的路由
+        .filter((route) => route.path === '/' || route.path.indexOf('/') === 0) // 顶级路由
+        .find((route) => route.name === 'Layout')?.children || []
 
     return generateMenuFromRoutes(topLevelRoutes as RouteRecordRaw[])
   })
@@ -126,13 +127,14 @@ export const useMenuGeneration = () => {
    * 获取动态路由菜单项
    */
   const asyncMenuItems = computed(() => {
-    return generateMenuFromRoutes(permissionStore.dynamicRoutes)
+    // dynamicRoutes is already MenuItem[], no need to convert
+    return permissionStore.dynamicRoutes
   })
 
   return {
     menuItems,
     asyncMenuItems,
     generateMenuFromRoutes,
-    hasPermission
+    hasPermission,
   }
 }

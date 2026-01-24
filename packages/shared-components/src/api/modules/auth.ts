@@ -10,7 +10,7 @@ import type {
   InitiateOAuthRequest,
   InitiateOAuthResponse,
   TelegramAuthData,
-  TelegramAuthResponse
+  TelegramAuthResponse,
 } from '../types'
 
 export const authApi = {
@@ -45,17 +45,17 @@ export const authApi = {
   },
 
   // OAuth 回调处理
-  async handleOAuthCallback(provider: string, data: any): Promise<LoginResponse> {
+  async handleOAuthCallback(provider: string, data: Record<string, unknown>): Promise<LoginResponse> {
     return request.post(`/auth/oauth/${provider}/callback`, data)
   },
 
   // Telegram 登录
-  async telegramAuth(data: TelegramAuthData, botToken: string): Promise<any> {
+  async telegramAuth(data: TelegramAuthData, botToken: string): Promise<TelegramAuthResponse> {
     const response = await request.post('/auth/oauth/telegram', data, {
       headers: {
-        'X-Telegram-Bot-Token': botToken
-      }
+        'X-Telegram-Bot-Token': botToken,
+      },
     })
     return response.data as TelegramAuthResponse
-  }
+  },
 }

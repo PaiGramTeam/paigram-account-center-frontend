@@ -9,7 +9,7 @@ export const useAppStore = defineStore('app', {
     primaryColor: '#165DFF',
     collapsed: false,
     showFooter: true,
-    showBreadcrumb: true
+    showBreadcrumb: true,
   }),
 
   actions: {
@@ -37,11 +37,10 @@ export const useAppStore = defineStore('app', {
 
     updateSettings(settings: Partial<AppConfig>) {
       Object.assign(this, settings)
-    }
-  },
+    },
 
-  persist: {
-    key: 'app-store',
-    paths: ['theme', 'primaryColor', 'collapsed', 'showFooter', 'showBreadcrumb']
-  }
+    toggleTheme() {
+      this.setTheme(this.theme === 'light' ? 'dark' : 'light')
+    },
+  },
 })

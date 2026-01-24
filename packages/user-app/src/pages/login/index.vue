@@ -1,45 +1,32 @@
 <template>
-  <div class="min-h-screen flex">
+  <div class="flex min-h-screen">
     <!-- 左侧装饰区域 -->
-    <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-500 to-indigo-600">
-      <div class="flex flex-col justify-center items-center w-full px-12 text-white">
-        <h1 class="text-5xl font-bold mb-4">Paigram</h1>
-        <p class="text-xl text-center max-w-md">
-          一个账号，畅享所有 PaiGram Bot 系列服务
-        </p>
+    <div class="hidden bg-gradient-to-br from-blue-500 to-indigo-600 lg:flex lg:w-1/2">
+      <div class="flex w-full flex-col items-center justify-center px-12 text-white">
+        <h1 class="mb-4 text-5xl font-bold">Paigram</h1>
+        <p class="max-w-md text-center text-xl">一个账号，畅享所有 PaiGram Bot 系列服务</p>
       </div>
     </div>
 
     <!-- 右侧登录表单 -->
-    <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
+    <div class="flex flex-1 items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
       <div class="w-full max-w-md">
-        <div class="bg-white py-8 px-6 shadow-lg rounded-lg">
+        <div class="rounded-lg bg-white px-6 py-8 shadow-lg">
           <!-- Logo 和标题 -->
-          <div class="text-center mb-8">
+          <div class="mb-8 text-center">
             <h2 class="text-3xl font-bold text-gray-900">欢迎回来</h2>
             <p class="mt-2 text-sm text-gray-600">
               没有账号？
-              <a-link @click="handleGoRegister" class="font-medium text-primary hover:text-primary-dark">
+              <a-link @click="handleGoRegister" class="font-medium text-blue-500 hover:text-blue-600">
                 立即注册
               </a-link>
             </p>
           </div>
 
           <!-- 登录表单 -->
-          <a-form
-            ref="formRef"
-            :model="loginForm"
-            :rules="rules"
-            layout="vertical"
-            @submit="handleSubmit"
-          >
+          <a-form :model="loginForm" :rules="rules" layout="vertical" @submit="handleSubmit">
             <a-form-item field="email" label="邮箱地址">
-              <a-input
-                v-model="loginForm.email"
-                size="large"
-                placeholder="请输入邮箱地址"
-                allow-clear
-              >
+              <a-input v-model="loginForm.email" size="large" placeholder="请输入邮箱地址" allow-clear>
                 <template #prefix>
                   <icon-email />
                 </template>
@@ -47,39 +34,24 @@
             </a-form-item>
 
             <a-form-item field="password" label="密码">
-              <a-input-password
-                v-model="loginForm.password"
-                size="large"
-                placeholder="请输入密码"
-                allow-clear
-              >
+              <a-input-password v-model="loginForm.password" size="large" placeholder="请输入密码" allow-clear>
                 <template #prefix>
                   <icon-lock />
                 </template>
               </a-input-password>
             </a-form-item>
 
-            <div class="flex items-center justify-between mb-6">
+            <div class="mb-6 flex items-center justify-between">
               <a-checkbox v-model="rememberMe">记住我</a-checkbox>
-              <a-link @click="handleForgotPassword" class="text-sm">
-                忘记密码？
-              </a-link>
+              <a-link @click="handleForgotPassword" class="text-sm"> 忘记密码？ </a-link>
             </div>
 
-            <a-button
-              type="primary"
-              size="large"
-              long
-              html-type="submit"
-              :loading="loading"
-            >
-              登录
-            </a-button>
+            <a-button type="primary" size="large" long html-type="submit" :loading="loading"> 登录 </a-button>
           </a-form>
 
           <!-- 分割线 -->
           <a-divider class="!my-8">
-            <span class="text-gray-500 text-sm">或使用其他方式登录</span>
+            <span class="text-sm text-gray-500">或使用其他方式登录</span>
           </a-divider>
 
           <!-- 第三方登录 -->
@@ -117,23 +89,19 @@
 import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import type { FormInstance } from '@arco-design/web-vue'
-import { IconGithub, IconGoogle } from '@arco-design/web-vue/es/icon'
-import { useUserStore } from '@paigram/shared-components'
-import { authApi } from '@/api'
-import type { LoginEmailRequest } from '@/api/types'
+import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
+import { authApi } from '@paigram/shared-components'
+import { useAuthStore } from '@/stores/auth'
+import type { LoginEmailRequest } from '@paigram/shared-components'
 
 const router = useRouter()
 const route = useRoute()
-const userStore = useUserStore()
-
-// 表单引用
-const formRef = ref<FormInstance>()
+const authStore = useAuthStore()
 
 // 表单数据
 const loginForm = reactive<LoginEmailRequest>({
   email: '',
-  password: ''
+  password: '',
 })
 
 // 记住我
@@ -146,44 +114,40 @@ const loading = ref(false)
 const rules = {
   email: [
     { required: true, message: '请输入邮箱地址' },
-    { type: 'email', message: '请输入有效的邮箱地址' }
+    { type: 'email', message: '请输入有效的邮箱地址' },
   ],
   password: [
     { required: true, message: '请输入密码' },
-    { minLength: 6, message: '密码长度不能少于6位' }
-  ]
+    { minLength: 6, message: '密码长度不能少于6位' },
+  ],
 }
 
 // OAuth 提供商
 const oauthProviders = [
   { name: 'google', label: 'Google', icon: IconGoogle },
-  { name: 'github', label: 'GitHub', icon: IconGithub }
+  { name: 'github', label: 'GitHub', icon: IconGithub },
 ]
 
+interface FormSubmitData {
+  values: LoginEmailRequest
+  errors: Record<string, string> | undefined
+}
+
 // 提交登录
-const handleSubmit = async ({ values, errors }: any): Promise<void> => {
+const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> => {
   if (errors) return
 
   loading.value = true
   try {
-    const response = await authApi.login(values)
-    
-    // 保存认证信息
-    userStore.setAuthData({
-      accessToken: response.data.access_token,
-      refreshToken: response.data.refresh_token
-    })
-    
-    // 获取用户信息
-    await userStore.fetchUserInfo()
-    
-    Message.success('登录成功')
-    
+    // 使用 authStore 的登录方法，它会自动处理 token 保存和用户信息获取
+    await authStore.loginWithEmail(values)
+
     // 跳转到控制台或之前的页面
     const redirect = route.query.redirect as string
-    router.push(redirect || '/dashboard')
-  } catch (error: any) {
-    Message.error(error.error || '登录失败，请检查邮箱和密码')
+    await router.push(redirect || '/dashboard')
+  } catch (error: unknown) {
+    // 错误信息已在 authStore 中处理
+    console.error('Login failed:', error)
   } finally {
     loading.value = false
   }
@@ -193,12 +157,12 @@ const handleSubmit = async ({ values, errors }: any): Promise<void> => {
 const handleOAuthLogin = async (provider: string): Promise<void> => {
   try {
     const response = await authApi.initiateOAuth(provider, {
-      redirect_to: `${window.location.origin}/auth/callback/${provider}`
+      redirect_to: `${window.location.origin}/auth/callback/${provider}`,
     })
-    
+
     // 跳转到授权页面
     window.location.href = response.data.auth_url
-  } catch (error) {
+  } catch (_error) {
     Message.error('OAuth 登录初始化失败')
   }
 }
@@ -218,13 +182,3 @@ const handleForgotPassword = (): void => {
   router.push('/forgot-password')
 }
 </script>
-
-<style scoped>
-.text-primary {
-  color: rgb(var(--primary-6));
-}
-
-.text-primary-dark {
-  color: rgb(var(--primary-7));
-}
-</style>

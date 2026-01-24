@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { UserInfo } from '../types'
+import type { UserInfo } from '../api/types'
 
 export interface UserState {
   userInfo: UserInfo | null
@@ -11,17 +11,19 @@ export const useUserStore = defineStore('user', {
   state: (): UserState => ({
     userInfo: null,
     token: '',
-    refreshToken: ''
+    refreshToken: '',
   }),
 
   getters: {
     isLogin: (state) => !!state.token,
     userId: (state) => state.userInfo?.id || '',
-    username: (state) => state.userInfo?.username || '',
-    nickname: (state) => state.userInfo?.nickname || '',
-    avatar: (state) => state.userInfo?.avatar || '',
+    displayName: (state) => state.userInfo?.display_name || '',
+    username: (state) => state.userInfo?.display_name || '', // For compatibility
+    nickname: (state) => state.userInfo?.display_name || '', // For compatibility
+    email: (state) => state.userInfo?.primary_email || '',
+    avatar: (state) => state.userInfo?.avatar_url || '',
     roles: (state) => state.userInfo?.roles || [],
-    permissions: (state) => state.userInfo?.permissions || []
+    permissions: (state) => state.userInfo?.permissions || [],
   },
 
   actions: {
@@ -47,12 +49,14 @@ export const useUserStore = defineStore('user', {
       this.setToken('mock-token', 'mock-refresh-token')
       this.setUserInfo({
         id: 1,
-        username: loginForm.email.split('@')[0],
-        nickname: '用户昵称',
-        email: loginForm.email || undefined,
-        avatar: '',
+        display_name: '用户昵称',
+        primary_email: loginForm.email,
+        avatar_url: '',
+        status: 'active',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         roles: ['user'],
-        permissions: ['read']
+        permissions: ['read'],
       })
     },
 
@@ -62,9 +66,14 @@ export const useUserStore = defineStore('user', {
     },
 
     async fetchUserInfo() {
-      // TODO: 获取用户信息 API
-      // const { data } = await getUserInfoAPI()
-      // this.setUserInfo(data)
+      // fetchUserInfo is now handled by individual apps (authStore.fetchUserProfile)
+      // This method is kept for compatibility with router guard interface
+      // If userInfo is already set, do nothing
+      if (this.userInfo) {
+        return
+      }
+      // Otherwise, this should be called from app-specific auth store
+      throw new Error('User info must be fetched before calling fetchUserInfo')
     },
 
     hasPermission(permission: string): boolean {
@@ -79,11 +88,11 @@ export const useUserStore = defineStore('user', {
       this.userInfo = null
       this.token = ''
       this.refreshToken = ''
-    }
-  }
+    },
+  },
 
-  // persist: {
-  //   key: 'user-store',
-  //   paths: ['token', 'refreshToken', 'userInfo']
-  // }
+  persist: {
+    key: 'paigram-user-store',
+    pick: ['token', 'refreshToken', 'userInfo'],
+  },
 })

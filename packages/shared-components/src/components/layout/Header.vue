@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between py-3">
         <div class="flex flex-auto items-center">
           <div class="flex items-center">
-            <h1 class="text-xl font-bold text-gray-900 mr-8">Paigram</h1>
+            <h1 class="mr-8 text-xl font-bold text-gray-900">Paigram</h1>
           </div>
           <a-menu mode="horizontal" :selected-keys="[activeMenuKey]" @menu-item-click="handleMenuClick">
             <a-menu-item v-for="item in navigationItems" :key="item.key" :disabled="item.disabled">
@@ -73,24 +73,28 @@
 import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { useUserStore } from '../stores'
+import { IconUser, IconDown, IconSettings, IconExport } from '@arco-design/web-vue/es/icon'
+import { useUserStore } from '../../stores/user'
 
 interface NavigationItem {
   key: string
   label: string
   path: string
-  icon?: any
+  icon?: string
   disabled?: boolean
 }
 
-const props = withDefaults(defineProps<{
-  navigationItems?: NavigationItem[]
-}>(), {
-  navigationItems: () => [
-    { key: 'home', label: '首页', path: '/' },
-    { key: 'dashboard', label: '控制台', path: '/dashboard' }
-  ]
-})
+const props = withDefaults(
+  defineProps<{
+    navigationItems?: NavigationItem[]
+  }>(),
+  {
+    navigationItems: () => [
+      { key: 'home', label: '首页', path: '/' },
+      { key: 'dashboard', label: '控制台', path: '/dashboard' },
+    ],
+  }
+)
 
 const emit = defineEmits<{
   login: []
@@ -107,13 +111,13 @@ const isLoggedIn = computed(() => userStore.isLogin)
 const activeMenuKey = computed(() => {
   // 根据当前路由路径确定激活的菜单项
   const currentPath = route.path
-  const item = props.navigationItems.find(item => item.path === currentPath)
+  const item = props.navigationItems.find((item) => item.path === currentPath)
   return item?.key || ''
 })
 
 // 菜单点击处理
 const handleMenuClick = (key: string): void => {
-  const item = props.navigationItems.find(item => item.key === key)
+  const item = props.navigationItems.find((item) => item.key === key)
   if (item && item.path) {
     router.push(item.path)
   }
@@ -133,7 +137,7 @@ const handleLogout = async (): Promise<void> => {
     Message.success('已退出登录')
     emit('logout')
     router.push('/login')
-  } catch (error) {
+  } catch (_error) {
     Message.error('退出登录失败')
   }
 }
@@ -149,6 +153,4 @@ const handleSettings = (): void => {
 }
 </script>
 
-<style scoped>
-/* 自定义样式（如需要） */
-</style>
+<style scoped></style>

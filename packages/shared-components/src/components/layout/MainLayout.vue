@@ -1,14 +1,10 @@
 <template>
-  <a-layout class="app-layout h-screen">
+  <a-layout class="app-layout min-h-screen">
     <!-- Header -->
     <a-layout-header class="h-16 px-0">
-      <AppHeader 
-        :show-collapse="showSidebar"
-        :show-search="showSearch"
-        @search="handleSearch"
-      />
+      <AppHeader :show-collapse="showSidebar" :show-search="showSearch" @search="handleSearch" />
     </a-layout-header>
-    
+
     <a-layout>
       <!-- Sidebar -->
       <a-layout-sider
@@ -19,38 +15,34 @@
         breakpoint="lg"
         class="shadow-sm"
       >
-        <AppSidebar
-          :menu-items="menuItems"
-          :collapsed="collapsed"
-          :accordion="accordion"
-        />
+        <AppSidebar :menu-items="menuItems" :collapsed="collapsed" :accordion="accordion" />
       </a-layout-sider>
-      
+
       <!-- Content -->
       <a-layout>
-        <a-layout-content class="relative">
+        <a-layout-content class="relative bg-white dark:bg-gray-800">
           <!-- Breadcrumb -->
-          <div v-if="showBreadcrumb" class="px-6 py-3 bg-white dark:bg-gray-900 border-b">
+          <div v-if="showBreadcrumb" class="border-b bg-white px-6 py-3 dark:bg-gray-900">
             <a-breadcrumb>
               <a-breadcrumb-item v-for="item in breadcrumbItems" :key="item.path">
                 {{ item.title }}
               </a-breadcrumb-item>
             </a-breadcrumb>
           </div>
-          
+
           <!-- Page Content -->
-          <div class="p-6 overflow-auto" :class="{ 'h-full': !showFooter }">
-            <router-view v-slot="{ Component, route }">
+          <div class="overflow-auto p-6" :class="{ 'h-full': !showFooter }">
+            <router-view v-slot="{ Component, route: currentRoute }">
               <transition name="fade-slide" mode="out-in" appear>
-                <keep-alive v-if="route.meta?.keepAlive" :include="cachedRoutes">
-                  <component :is="Component" :key="route.path" />
+                <keep-alive v-if="currentRoute.meta?.keepAlive" :include="cachedRoutes">
+                  <component :is="Component" :key="currentRoute.path" />
                 </keep-alive>
-                <component v-else :is="Component" :key="route.path" />
+                <component v-else :is="Component" :key="currentRoute.path" />
               </transition>
             </router-view>
           </div>
         </a-layout-content>
-        
+
         <!-- Footer -->
         <a-layout-footer v-if="showFooter" class="h-12 px-0">
           <AppFooter :copyright="copyright" />
@@ -85,7 +77,7 @@ const props = withDefaults(defineProps<Props>(), {
   showSearch: true,
   showBreadcrumb: true,
   showFooter: true,
-  accordion: true
+  accordion: true,
 })
 
 const emit = defineEmits<{
@@ -106,7 +98,7 @@ watch(
     // TODO: 根据路由生成面包屑
     breadcrumbItems.value = [
       { path: '/', title: '首页' },
-      { path: route.path, title: route.meta?.title as string || '页面' }
+      { path: route.path, title: (route.meta?.title as string) || '页面' },
     ]
   },
   { immediate: true }
@@ -133,44 +125,8 @@ const handleSearch = (value: string) => {
 provide('layoutConfig', {
   collapsed,
   showSidebar: props.showSidebar,
-  showFooter: props.showFooter
+  showFooter: props.showFooter,
 })
 </script>
 
-<style scoped>
-.app-layout {
-  min-height: 100vh;
-}
-
-/* 页面切换动画 */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-:deep(.arco-layout-header) {
-  padding: 0;
-  height: 64px;
-  line-height: 64px;
-}
-
-:deep(.arco-layout-footer) {
-  padding: 0;
-  height: 48px;
-  line-height: 48px;
-}
-
-:deep(.arco-layout-content) {
-  background-color: var(--color-bg-2);
-}
-</style>
+<style scoped></style>

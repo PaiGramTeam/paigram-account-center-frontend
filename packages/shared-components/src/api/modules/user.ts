@@ -1,10 +1,5 @@
 import request from '../request'
-import type {
-  UserInfo,
-  ProfileData,
-  ProfileResponse,
-  UpdateProfileRequest
-} from '../types'
+import type { UserInfo, ProfileData, ProfileResponse, UpdateProfileRequest } from '../types'
 
 export const userApi = {
   // 获取用户列表
@@ -15,7 +10,7 @@ export const userApi = {
   // 获取用户详情
   async getDetail(id: number | string): Promise<{ data: UserInfo }> {
     return request.get(`/users/${id}`)
-  }
+  },
 }
 
 export const profileApi = {
@@ -27,5 +22,5 @@ export const profileApi = {
   // 更新用户 Profile
   async updateProfile(id: number | string, data: UpdateProfileRequest): Promise<{ data: ProfileData }> {
     return request.patch(`/profiles/${id}`, data)
-  }
+  },
 }

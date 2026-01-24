@@ -1,14 +1,11 @@
 <template>
-  <div class="app-header flex items-center justify-between h-16 px-6 bg-white dark:bg-gray-900 shadow-sm">
+  <div
+    class="app-header flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm dark:border-gray-700 dark:bg-gray-900"
+  >
     <!-- 左侧 -->
     <div class="flex items-center">
       <!-- 折叠按钮 -->
-      <a-button
-        v-if="showCollapse"
-        type="text"
-        @click="handleToggleCollapse"
-        class="mr-4"
-      >
+      <a-button v-if="showCollapse" type="text" @click="handleToggleCollapse" class="mr-4">
         <template #icon>
           <icon-menu-fold v-if="!collapsed" />
           <icon-menu-unfold v-else />
@@ -17,7 +14,7 @@
 
       <!-- Logo 和标题 -->
       <div class="flex items-center">
-        <img v-if="logo" :src="logo" alt="logo" class="h-8 w-8 mr-3" />
+        <img v-if="logo" :src="logo" alt="logo" class="mr-3 h-8 w-8" />
         <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h1>
       </div>
     </div>
@@ -25,12 +22,7 @@
     <!-- 右侧 -->
     <div class="flex items-center space-x-4">
       <!-- 搜索 -->
-      <a-input-search
-        v-if="showSearch"
-        placeholder="搜索..."
-        class="w-64"
-        @search="handleSearch"
-      />
+      <a-input-search v-if="showSearch" placeholder="搜索..." class="w-64" @search="handleSearch" />
 
       <!-- 主题切换 -->
       <a-button type="text" @click="toggleTheme">
@@ -51,7 +43,7 @@
 
       <!-- 用户下拉菜单 -->
       <a-dropdown trigger="click" @select="handleUserMenuClick">
-        <div class="flex items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-2 py-1">
+        <div class="flex cursor-pointer items-center rounded px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-800">
           <a-avatar :size="32" class="mr-2">
             <img v-if="userStore.avatar" :src="userStore.avatar" alt="avatar" />
             <icon-user v-else />
@@ -85,8 +77,19 @@
 </template>
 
 <script setup lang="ts">
-import { useAppStore } from '../stores/app'
-import { useUserStore } from '../stores/user'
+import { computed } from 'vue'
+import {
+  IconMenuFold,
+  IconMenuUnfold,
+  IconSun,
+  IconMoon,
+  IconNotification,
+  IconUser,
+  IconSettings,
+  IconExport,
+} from '@arco-design/web-vue/es/icon'
+import { useAppStore } from '../../stores/app'
+import { useUserStore } from '../../stores/user'
 import { useRouter } from 'vue-router'
 
 interface Props {
@@ -94,9 +97,9 @@ interface Props {
   showSearch?: boolean
 }
 
-defineProps<Props>({
-  showCollapse: { type: Boolean, default: true },
-  showSearch: { type: Boolean, default: true }
+withDefaults(defineProps<Props>(), {
+  showCollapse: true,
+  showSearch: true,
 })
 
 const emit = defineEmits<{
@@ -140,8 +143,4 @@ const handleUserMenuClick = async (value: string) => {
 }
 </script>
 
-<style scoped>
-.app-header {
-  border-bottom: 1px solid var(--color-border-1);
-}
-</style>
+<style scoped></style>

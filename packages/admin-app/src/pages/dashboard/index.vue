@@ -3,25 +3,14 @@
     <!-- 统计卡片 -->
     <a-row :gutter="16" class="mb-6">
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="总用户数"
-          :value="statistics.totalUsers"
-          :value-from="0"
-          animation
-        >
+        <a-statistic title="总用户数" :value="statistics.totalUsers" :value-from="0" animation>
           <template #prefix>
             <icon-user class="text-blue-500" />
           </template>
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="今日新增"
-          :value="statistics.todayNewUsers"
-          :value-from="0"
-          animation
-          show-group-separator
-        >
+        <a-statistic title="今日新增" :value="statistics.todayNewUsers" :value-from="0" animation show-group-separator>
           <template #prefix>
             <icon-user-add class="text-green-500" />
           </template>
@@ -34,24 +23,14 @@
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="活跃用户"
-          :value="statistics.activeUsers"
-          :value-from="0"
-          animation
-        >
+        <a-statistic title="活跃用户" :value="statistics.activeUsers" :value-from="0" animation>
           <template #prefix>
             <icon-fire class="text-orange-500" />
           </template>
         </a-statistic>
       </a-col>
       <a-col :xs="24" :sm="12" :md="6">
-        <a-statistic
-          title="在线用户"
-          :value="statistics.onlineUsers"
-          :value-from="0"
-          animation
-        >
+        <a-statistic title="在线用户" :value="statistics.onlineUsers" :value-from="0" animation>
           <template #prefix>
             <icon-wifi class="text-purple-500" />
           </template>
@@ -59,7 +38,7 @@
       </a-col>
     </a-row>
 
-    <a-row :gutter="16}>
+    <a-row :gutter="16">
       <!-- 用户增长趋势 -->
       <a-col :xs="24" :lg="16">
         <a-card title="用户增长趋势" class="mb-6">
@@ -70,11 +49,11 @@
               <a-radio value="year">本年</a-radio>
             </a-radio-group>
           </template>
-          
+
           <div class="h-80">
             <!-- 这里可以集成图表库如 ECharts 或 Chart.js -->
-            <div class="flex items-center justify-center h-full text-gray-400">
-              <icon-chart-line class="mr-2" /> 用户增长图表
+            <div class="flex h-full items-center justify-center text-gray-400">
+              <icon-bar-chart class="mr-2" /> 用户增长图表
             </div>
           </div>
         </a-card>
@@ -84,7 +63,7 @@
           <template #extra>
             <a-link @click="$router.push('/users')">查看全部</a-link>
           </template>
-          
+
           <a-list :bordered="false">
             <a-list-item v-for="user in latestUsers" :key="user.id">
               <a-list-item-meta>
@@ -97,14 +76,10 @@
                 <template #title>
                   {{ user.display_name }}
                 </template>
-                <template #description>
-                  {{ user.email }} · {{ formatRelativeTime(user.created_at) }}
-                </template>
+                <template #description> {{ user.primary_email }} · {{ formatRelativeTime(user.created_at) }} </template>
               </a-list-item-meta>
               <template #actions>
-                <a-button type="text" size="small" @click="handleViewUser(user)">
-                  查看
-                </a-button>
+                <a-button type="text" size="small" @click="handleViewUser(user)"> 查看 </a-button>
               </template>
             </a-list-item>
           </a-list>
@@ -116,9 +91,7 @@
         <!-- 系统状态 -->
         <a-card title="系统状态" class="mb-6">
           <a-descriptions :column="1" :label-style="{ width: '100px' }">
-            <a-descriptions-item label="系统版本">
-              v1.0.0
-            </a-descriptions-item>
+            <a-descriptions-item label="系统版本"> v1.0.0 </a-descriptions-item>
             <a-descriptions-item label="运行时间">
               {{ systemUptime }}
             </a-descriptions-item>
@@ -186,10 +159,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
+import {
+  IconUser,
+  IconUserAdd,
+  IconArrowRise,
+  IconFire,
+  IconWifi,
+  IconBarChart,
+  IconUserGroup,
+  IconFile,
+  IconSettings,
+  IconCloudDownload,
+} from '@arco-design/web-vue/es/icon'
 import { userApi } from '@paigram/shared-components'
+import type { UserListItem } from '@paigram/shared-components'
 
 const router = useRouter()
 
@@ -199,51 +185,29 @@ const statistics = reactive({
   todayNewUsers: 128,
   newUserGrowth: 12.5,
   activeUsers: 8456,
-  onlineUsers: 1234
+  onlineUsers: 1234,
 })
 
 // 图表周期
 const chartPeriod = ref('month')
 
 // 最新用户
-const latestUsers = ref([
-  {
-    id: 1,
-    display_name: '张三',
-    email: 'zhangsan@example.com',
-    avatar_url: '',
-    created_at: new Date().toISOString()
-  },
-  {
-    id: 2,
-    display_name: '李四',
-    email: 'lisi@example.com',
-    avatar_url: '',
-    created_at: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: 3,
-    display_name: '王五',
-    email: 'wangwu@example.com',
-    avatar_url: '',
-    created_at: new Date(Date.now() - 7200000).toISOString()
-  }
-])
+const latestUsers = ref<UserListItem[]>([])
 
 // 系统运行时间
 const systemUptime = ref('0天0小时')
-let uptimeTimer: any = null
+let uptimeTimer: ReturnType<typeof setInterval> | null = null
 
 // 计算系统运行时间
 const calculateUptime = () => {
   const startTime = new Date('2024-01-01').getTime()
   const now = Date.now()
   const diff = now - startTime
-  
+
   const days = Math.floor(diff / 86400000)
   const hours = Math.floor((diff % 86400000) / 3600000)
   const minutes = Math.floor((diff % 3600000) / 60000)
-  
+
   systemUptime.value = `${days}天${hours}小时${minutes}分钟`
 }
 
@@ -252,11 +216,11 @@ const formatRelativeTime = (date: string): string => {
   const now = Date.now()
   const then = new Date(date).getTime()
   const diff = now - then
-  
+
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
-  
+
   if (minutes < 1) return '刚刚'
   if (minutes < 60) return `${minutes}分钟前`
   if (hours < 24) return `${hours}小时前`
@@ -264,7 +228,7 @@ const formatRelativeTime = (date: string): string => {
 }
 
 // 查看用户
-const handleViewUser = (user: any) => {
+const handleViewUser = (user: { id: number }) => {
   router.push(`/users/${user.id}`)
 }
 
@@ -282,7 +246,7 @@ const loadDashboardData = async () => {
     // TODO: 调用 API 获取统计数据
     // const stats = await api.getStatistics()
     // Object.assign(statistics, stats)
-    
+
     // 获取最新用户
     const response = await userApi.getList()
     latestUsers.value = response.data.slice(0, 3)
@@ -304,9 +268,4 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-.text-blue-500 { color: rgb(59, 130, 246); }
-.text-green-500 { color: rgb(34, 197, 94); }
-.text-orange-500 { color: rgb(249, 115, 22); }
-.text-purple-500 { color: rgb(168, 85, 247); }
-</style>
+<style scoped></style>

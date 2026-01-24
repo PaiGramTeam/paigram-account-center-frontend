@@ -15,6 +15,7 @@ export interface RouteMeta {
   noAffix?: boolean // 如果设置为true，标签将不会添加到tab-bar中
   order?: number // 排序路由菜单项。如果设置该值，值越高，越靠前
   sort?: number
+  disabled?: boolean // 是否禁用菜单项
 }
 
 // 菜单项类型
@@ -34,6 +35,9 @@ export interface UserInfo {
   avatar?: string
   roles: string[]
   permissions: string[]
+  status?: string
+  created_at?: string
+  updated_at?: string
 }
 
 // 应用配置类型

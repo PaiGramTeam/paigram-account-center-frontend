@@ -1,5 +1,5 @@
 <template>
-  <div class="account-binding-page">
+  <div>
     <a-card title="账号绑定">
       <p>账号绑定页面内容</p>
     </a-card>
@@ -9,3 +9,5 @@
 <script setup lang="ts">
 // 账号绑定页面
 </script>
+
+<style scoped></style>

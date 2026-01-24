@@ -1,5 +1,5 @@
 // API 响应基础类型
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   code?: number
   message?: string
   data: T
@@ -10,7 +10,7 @@ export interface ApiResponse<T = any> {
 export interface ApiError {
   error: string
   code?: string
-  details?: any
+  details?: Record<string, unknown>
 }
 
 // 登录相关类型
@@ -19,15 +19,15 @@ export interface LoginEmailRequest {
   password: string
 }
 
-export interface LoginResponse {
-  data: {
-    access_token: string
-    refresh_token: string
-    access_expiry: string
-    refresh_expiry: string
-    user_id: number
-  }
+export interface LoginResponseData {
+  access_token: string
+  refresh_token: string
+  access_expiry: string
+  refresh_expiry: string
+  user_id: number
 }
+
+export type LoginResponse = ApiResponse<LoginResponseData>
 
 // 用户信息相关类型
 export interface UserInfo {
@@ -41,6 +41,36 @@ export interface UserInfo {
   last_login_at?: string
   bio?: string
   locale?: string
+  roles?: string[]
+  permissions?: string[]
+}
+
+// 扩展的用户详情类型（用于管理员面板）
+export interface UserDetail extends UserInfo {
+  username?: string
+  nickname?: string
+  email?: string
+  email_verified?: boolean
+  phone?: string
+  phone_verified?: boolean
+  permissions?: string[]
+  last_login_ip?: string
+  last_login_device?: string
+  login_methods?: LoginType[]
+  two_factor_enabled?: boolean
+  emails?: EmailData[]
+}
+
+// 用户列表项类型（用于用户管理列表）
+export interface UserListItem {
+  id: number
+  display_name: string
+  primary_email: string
+  avatar_url?: string
+  status: UserStatus
+  primary_login_type?: LoginType
+  last_login_at?: string
+  created_at: string
 }
 
 export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended'

@@ -14,8 +14,8 @@ const i18n = createI18n({
   allowComposition: true,
   messages: {
     'zh-CN': zhCN,
-    'en-US': enUS
-  }
+    'en-US': enUS,
+  },
 })
 
 export const setupI18n = (app: App) => {
@@ -31,11 +31,11 @@ export const changeLocale = (locale: LocaleType) => {
   // Update Arco Design locale
   if (locale === 'zh-CN') {
     import('@arco-design/web-vue/es/locale/lang/zh-cn').then((module) => {
-      window.$arcoLang = module.default
+      ;(window as Window & { $arcoLang?: unknown }).$arcoLang = module.default
     })
   } else {
     import('@arco-design/web-vue/es/locale/lang/en-us').then((module) => {
-      window.$arcoLang = module.default
+      ;(window as Window & { $arcoLang?: unknown }).$arcoLang = module.default
     })
   }
 }

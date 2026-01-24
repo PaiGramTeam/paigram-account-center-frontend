@@ -14,7 +14,7 @@ export default {
   'menu.system': 'System',
   'menu.system.config': 'Configuration',
   'menu.system.logs': 'Audit Logs',
-  
+
   // Common
   'common.login': 'Login',
   'common.logout': 'Logout',
@@ -31,7 +31,7 @@ export default {
   'common.submit': 'Submit',
   'common.back': 'Back',
   'common.loading': 'Loading...',
-  
+
   // Messages
   'message.loginSuccess': 'Login successful',
   'message.loginFailed': 'Login failed',
@@ -42,13 +42,13 @@ export default {
   'message.deleteSuccess': 'Deleted successfully',
   'message.deleteFailed': 'Delete failed',
   'message.noPermission': 'No permission to access this page',
-  
+
   // Validation
   'validation.required': 'This field is required',
   'validation.email': 'Please enter a valid email address',
   'validation.minLength': 'Must be at least {min} characters',
   'validation.maxLength': 'Must be no more than {max} characters',
-  
+
   // User
   'user.email': 'Email',
   'user.nickname': 'Nickname',
@@ -56,11 +56,11 @@ export default {
   'user.status': 'Status',
   'user.createTime': 'Created',
   'user.lastLoginTime': 'Last Login',
-  
+
   // Settings
   'settings.theme': 'Theme',
   'settings.language': 'Language',
   'settings.darkMode': 'Dark Mode',
   'settings.lightMode': 'Light Mode',
-  'settings.systemTheme': 'System'
+  'settings.systemTheme': 'System',
 }

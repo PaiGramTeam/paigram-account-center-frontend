@@ -11,17 +11,17 @@
       class="shadow-lg"
     >
       <!-- Logo 区域 -->
-      <div class="flex items-center justify-center h-16 px-4 bg-primary">
+      <div class="flex h-16 items-center justify-center bg-blue-600 px-4">
         <transition name="fade" mode="out-in">
-          <h1 v-if="!collapsed" class="text-white text-lg font-bold">
+          <h1 v-if="!collapsed" class="text-lg font-bold text-white">
             {{ appTitle }}
           </h1>
-          <span v-else class="text-white text-2xl font-bold">
+          <span v-else class="text-2xl font-bold text-white">
             {{ appTitleShort }}
           </span>
         </transition>
       </div>
-      
+
       <!-- 菜单 -->
       <a-menu
         v-model:selected-keys="selectedKeys"
@@ -37,25 +37,22 @@
               <component :is="item.meta?.icon" />
             </template>
             <template #title>
-              {{ $t(item.meta?.locale || item.name) }}
+              {{ translateMenuTitle(getMenuTitle(item.meta, item.name)) }}
             </template>
-            <a-menu-item
-              v-for="child in item.children"
-              :key="child.path"
-            >
+            <a-menu-item v-for="child in item.children" :key="child.path">
               <template #icon>
                 <component :is="child.meta?.icon" />
               </template>
-              {{ $t(child.meta?.locale || child.name) }}
+              {{ translateMenuTitle(getMenuTitle(child.meta, child.name)) }}
             </a-menu-item>
           </a-sub-menu>
-          
+
           <!-- 单独菜单项 -->
           <a-menu-item v-else :key="item.path">
             <template #icon>
               <component :is="item.meta?.icon" />
             </template>
-            {{ $t(item.meta?.locale || item.name) }}
+            {{ translateMenuTitle(getMenuTitle(item.meta, item.name)) }}
           </a-menu-item>
         </template>
       </a-menu>
@@ -63,24 +60,20 @@
 
     <a-layout>
       <!-- 顶部栏 -->
-      <a-layout-header v-if="showHeader" class="flex items-center px-6 bg-white shadow-sm" style="height: 64px;">
-        <div class="flex items-center flex-1">
+      <a-layout-header v-if="showHeader" class="flex items-center bg-white px-6 shadow-sm" style="height: 64px">
+        <div class="flex flex-1 items-center">
           <!-- 折叠按钮 -->
-          <a-button
-            v-if="showSidebar && collapsible"
-            type="text"
-            @click="toggleCollapse"
-          >
+          <a-button v-if="showSidebar && collapsible" type="text" @click="toggleCollapse">
             <template #icon>
               <icon-menu-fold v-if="!collapsed" />
               <icon-menu-unfold v-else />
             </template>
           </a-button>
-          
+
           <!-- 面包屑 -->
           <a-breadcrumb v-if="showBreadcrumb" class="ml-4">
             <a-breadcrumb-item v-for="item in breadcrumbItems" :key="item.name">
-              {{ $t(item.meta?.locale || item.name) }}
+              {{ translateMenuTitle(getMenuTitle(item.meta, item.name)) }}
             </a-breadcrumb-item>
           </a-breadcrumb>
         </div>
@@ -144,12 +137,12 @@
       <!-- 内容区 -->
       <a-layout-content :class="contentClass">
         <div class="h-full" :class="contentInnerClass">
-          <router-view v-slot="{ Component, route }">
+          <router-view v-slot="{ Component, route: currentRoute }">
             <transition name="fade-slide" mode="out-in">
-              <keep-alive v-if="keepAlive && route.meta?.keepAlive">
-                <component :is="Component" :key="route.fullPath" />
+              <keep-alive v-if="keepAlive && currentRoute.meta?.keepAlive">
+                <component :is="Component" :key="currentRoute.fullPath" />
               </keep-alive>
-              <component :is="Component" v-else :key="route.fullPath" />
+              <component :is="Component" v-else :key="currentRoute.fullPath" />
             </transition>
           </router-view>
         </div>
@@ -167,7 +160,20 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { useAppStore, useUserStore, usePermissionStore } from '../stores'
+import {
+  IconMenuFold,
+  IconMenuUnfold,
+  IconFullscreen,
+  IconFullscreenExit,
+  IconMoon,
+  IconSun,
+  IconNotification,
+  IconUser,
+  IconSettings,
+  IconExport,
+} from '@arco-design/web-vue/es/icon'
+import { useAppStore } from '../../stores/app'
+import { useUserStore } from '../../stores/user'
 import { useI18n } from 'vue-i18n'
 import type { RouteRecordRaw } from 'vue-router'
 
@@ -178,7 +184,7 @@ interface Props {
   showFooter?: boolean
   showBreadcrumb?: boolean
   showNotifications?: boolean
-  
+
   // 侧边栏配置
   sidebarWidth?: number
   collapsedWidth?: number
@@ -186,17 +192,17 @@ interface Props {
   defaultCollapsed?: boolean
   accordion?: boolean
   menuTheme?: 'light' | 'dark'
-  
+
   // 内容区配置
   contentClass?: string
   contentInnerClass?: string
   keepAlive?: boolean
-  
+
   // 文本配置
   appTitle?: string
   appTitleShort?: string
   footerText?: string
-  
+
   // 菜单配置
   menuItems?: RouteRecordRaw[]
 }
@@ -219,7 +225,7 @@ const props = withDefaults(defineProps<Props>(), {
   appTitle: 'Paigram',
   appTitleShort: 'P',
   footerText: '© 2024 Paigram. All rights reserved.',
-  menuItems: () => []
+  menuItems: () => [],
 })
 
 const emit = defineEmits<{
@@ -229,10 +235,9 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const route = useRoute()
-const { t } = useI18n()
+const { t: _t } = useI18n()
 const appStore = useAppStore()
 const userStore = useUserStore()
-const permissionStore = usePermissionStore()
 
 // 状态
 const collapsed = ref(props.defaultCollapsed)
@@ -247,9 +252,28 @@ const userAvatar = computed(() => userStore.avatar)
 
 // 面包屑项目
 const breadcrumbItems = computed(() => {
-  const matched = route.matched.filter(item => item.meta?.locale)
+  const matched = route.matched.filter((item) => item.meta?.locale)
   return matched
 })
+
+// 安全获取菜单标题
+const getMenuTitle = (meta: Record<string, unknown> | undefined, name: string | symbol | undefined): string => {
+  const locale = meta?.locale
+  if (typeof locale === 'string' && locale) {
+    return locale
+  }
+  if (typeof name === 'string' && name) {
+    return name
+  }
+  // 返回空字符串作为 fallback，不会触发 i18n 警告
+  return ''
+}
+
+// i18n 翻译包装函数，避免空 key 警告
+const translateMenuTitle = (title: string): string => {
+  if (!title) return ''
+  return _t(title)
+}
 
 // 监听路由变化
 watch(
@@ -257,12 +281,10 @@ watch(
   (path) => {
     // 更新选中的菜单
     selectedKeys.value = [path]
-    
+
     // 更新展开的菜单
     const matched = route.matched
-    openKeys.value = matched
-      .filter(item => item.path !== path)
-      .map(item => item.path)
+    openKeys.value = matched.filter((item) => item.path !== path).map((item) => item.path)
   },
   { immediate: true }
 )
@@ -304,7 +326,7 @@ const handleLogout = async () => {
     await userStore.logout()
     Message.success('已退出登录')
     router.push('/login')
-  } catch (error) {
+  } catch (_error) {
     Message.error('退出登录失败')
   }
 }
@@ -317,34 +339,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.bg-primary {
-  background-color: rgb(var(--primary-6));
-}
-
-/* 过渡动画 */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.3s;
-}
-
-.fade-slide-enter-from {
-  opacity: 0;
-  transform: translateX(-30px);
-}
-
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(30px);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
+<style scoped></style>

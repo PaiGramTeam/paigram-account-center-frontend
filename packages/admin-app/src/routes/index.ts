@@ -1,6 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { setupRouterGuard, useUserStore } from '@paigram/shared-components'
 
 // 公共路由
 export const constantRoutes: RouteRecordRaw[] = [
@@ -8,20 +7,20 @@ export const constantRoutes: RouteRecordRaw[] = [
     path: '/login',
     name: 'Login',
     component: () => import('@/pages/login/index.vue'),
-    meta: { locale: 'common.login', requiresAuth: false, hideInMenu: true }
+    meta: { locale: 'common.login', requiresAuth: false, hideInMenu: true },
   },
   {
     path: '/404',
     name: 'NotFound',
     component: () => import('@/pages/error/404.vue'),
-    meta: { locale: 'error.404', requiresAuth: false, hideInMenu: true }
+    meta: { locale: 'error.404', requiresAuth: false, hideInMenu: true },
   },
   {
     path: '/403',
     name: 'NoPermission',
     component: () => import('@/pages/error/403.vue'),
-    meta: { locale: 'error.403', requiresAuth: false, hideInMenu: true }
-  }
+    meta: { locale: 'error.403', requiresAuth: false, hideInMenu: true },
+  },
 ]
 
 // 需要根据权限动态加载的路由
@@ -36,135 +35,132 @@ export const asyncRoutes: RouteRecordRaw[] = [
         path: 'dashboard',
         name: 'Dashboard',
         component: () => import('@/pages/dashboard/index.vue'),
-        meta: { 
-          locale: 'menu.dashboard', 
-          icon: 'icon-dashboard', 
+        meta: {
+          locale: 'menu.dashboard',
+          icon: 'icon-dashboard',
           requiresAuth: true,
-          permissions: ['admin.dashboard']
-        }
+          permissions: ['admin.dashboard'],
+        },
       },
       {
         path: 'users',
         name: 'Users',
         redirect: '/users/list',
-        meta: { 
-          locale: 'menu.users', 
-          icon: 'icon-user-group', 
-          requiresAuth: true 
+        meta: {
+          locale: 'menu.users',
+          icon: 'icon-user-group',
+          requiresAuth: true,
         },
         children: [
           {
             path: 'list',
             name: 'UserList',
             component: () => import('@/pages/users/index.vue'),
-            meta: { 
-              locale: 'menu.users.list', 
-              permissions: ['admin.users.list'], 
-              requiresAuth: true 
-            }
+            meta: {
+              locale: 'menu.users.list',
+              permissions: ['admin.users.list'],
+              requiresAuth: true,
+            },
           },
           {
             path: ':id/detail',
             name: 'UserDetail',
             component: () => import('@/pages/users/detail.vue'),
-            meta: { 
-              locale: 'menu.users.detail', 
-              permissions: ['admin.users.view'], 
+            meta: {
+              locale: 'menu.users.detail',
+              permissions: ['admin.users.view'],
               requiresAuth: true,
-              hideInMenu: true
-            }
+              hideInMenu: true,
+            },
           },
           {
             path: 'roles',
             name: 'UserRoles',
             component: () => import('@/pages/users/roles.vue'),
-            meta: { 
-              locale: 'menu.users.roles', 
-              permissions: ['admin.roles.list'], 
-              requiresAuth: true 
-            }
+            meta: {
+              locale: 'menu.users.roles',
+              permissions: ['admin.roles.list'],
+              requiresAuth: true,
+            },
           },
           {
             path: 'permissions',
             name: 'UserPermissions',
             component: () => import('@/pages/users/permissions.vue'),
-            meta: { 
-              locale: 'menu.users.permissions', 
-              permissions: ['admin.permissions.list'], 
-              requiresAuth: true 
-            }
-          }
-        ]
+            meta: {
+              locale: 'menu.users.permissions',
+              permissions: ['admin.permissions.list'],
+              requiresAuth: true,
+            },
+          },
+        ],
       },
       {
         path: 'system',
         name: 'System',
-        meta: { 
-          locale: 'menu.system', 
-          icon: 'icon-settings', 
-          requiresAuth: true 
+        meta: {
+          locale: 'menu.system',
+          icon: 'icon-settings',
+          requiresAuth: true,
         },
         children: [
           {
             path: 'settings',
             name: 'SystemSettings',
             component: () => import('@/pages/system/settings.vue'),
-            meta: { 
-              locale: 'menu.system.settings', 
-              permissions: ['admin.system.settings'], 
-              requiresAuth: true 
-            }
+            meta: {
+              locale: 'menu.system.settings',
+              permissions: ['admin.system.settings'],
+              requiresAuth: true,
+            },
           },
           {
             path: 'logs',
             name: 'SystemLogs',
             component: () => import('@/pages/system/logs.vue'),
-            meta: { 
-              locale: 'menu.system.logs', 
-              permissions: ['admin.system.logs'], 
-              requiresAuth: true 
-            }
+            meta: {
+              locale: 'menu.system.logs',
+              permissions: ['admin.system.logs'],
+              requiresAuth: true,
+            },
           },
           {
             path: 'backup',
             name: 'SystemBackup',
             component: () => import('@/pages/system/backup.vue'),
-            meta: { 
-              locale: 'menu.system.backup', 
-              permissions: ['admin.system.backup'], 
-              requiresAuth: true 
-            }
-          }
-        ]
+            meta: {
+              locale: 'menu.system.backup',
+              permissions: ['admin.system.backup'],
+              requiresAuth: true,
+            },
+          },
+        ],
       },
       {
         path: 'profile',
         name: 'Profile',
         component: () => import('@/pages/profile/index.vue'),
-        meta: { 
-          locale: 'menu.profile', 
-          icon: 'icon-user', 
+        meta: {
+          locale: 'menu.profile',
+          icon: 'icon-user',
           requiresAuth: true,
-          hideInMenu: true 
-        }
-      }
-    ]
-  }
+          hideInMenu: true,
+        },
+      },
+    ],
+  },
 ]
 
 // 捕获所有未匹配的路由
 const catchAllRoute: RouteRecordRaw = {
   path: '/:pathMatch(.*)*',
-  redirect: '/404'
+  redirect: '/404',
 }
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...constantRoutes, ...asyncRoutes, catchAllRoute],
-  scrollBehavior: () => ({ left: 0, top: 0 })
+  scrollBehavior: () => ({ left: 0, top: 0 }),
 })
-
-// 设置路由守卫
-setupRouterGuard(router)
 
 export default router

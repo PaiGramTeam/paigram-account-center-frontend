@@ -56,31 +56,40 @@ bun run build:all
 每个应用（user-app 和 admin-app）都包含以下目录结构：
 
 ### `/src/routes`
+
 路由配置文件目录，用于定义应用的页面路由和导航结构。
 
 ### `/src/stores`
+
 Pinia 状态管理目录，存放全局状态管理相关的 store 文件。
 
 ### `/src/types`
+
 TypeScript 类型定义目录，包含：
+
 - 自定义类型定义
 - API 接口类型
 - `auto-imports.d.ts` - 自动导入的类型声明（自动生成）
 - `components.d.ts` - 组件自动导入的类型声明（自动生成）
 
 ### `/src/components`
+
 可复用组件目录，存放应用中的 Vue 组件。
 
 ### `/src/pages`
+
 页面组件目录，对应路由的页面级组件。
 
 ### `/src/config`
+
 配置文件目录，包含：
+
 - API 配置
 - 环境变量配置
 - 应用常量配置
 
 ### `/src/hooks`
+
 自定义 Vue Composition API hooks 目录，存放可复用的业务逻辑。
 
 ## 共享组件库

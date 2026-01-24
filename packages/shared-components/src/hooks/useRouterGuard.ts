@@ -1,66 +1,56 @@
-import { Router } from 'vue-router'
-import { useUserStore } from '../stores/user'
-import { usePermissionStore } from '../stores/permission'
-import { Message } from '@arco-design/web-vue'
+import type { Router } from 'vue-router'
+import type { MenuItem } from '../types'
 
-// 白名单路由
-const whiteList = ['/login', '/register', '/404', '/403']
+interface UserStoreForGuard {
+  isLogin: boolean
+  userInfo: unknown
+  fetchUserInfo: () => Promise<void>
+  logout: () => Promise<void>
+  hasPermission: (permission: string) => boolean
+  hasRole: (role: string) => boolean
+}
 
-export function setupRouterGuard(router: Router) {
+interface PermissionStoreForGuard {
+  generateRoutes: (routes: MenuItem[]) => MenuItem[]
+}
+
+export interface RouterGuardConfig {
+  whiteList?: string[]
+  getUserStore: () => UserStoreForGuard
+  getPermissionStore?: () => PermissionStoreForGuard
+}
+
+export function setupRouterGuard(router: Router, config: RouterGuardConfig) {
+  const { whiteList = ['/login', '/register', '/404', '/403'], getUserStore } = config
+
   // 全局前置守卫
-  router.beforeEach(async (to, from, next) => {
-    const userStore = useUserStore()
-    const permissionStore = usePermissionStore()
-    
+  router.beforeEach(async (to, _from, next) => {
+    const userStore = getUserStore()
+
     // 设置页面标题
     if (to.meta?.title) {
       document.title = `${to.meta.title} - Paigram Account Center`
     }
-    
+
     // 判断是否登录
     if (userStore.isLogin) {
       if (to.path === '/login') {
         // 已登录且要跳转的页面是登录页
         next({ path: '/' })
       } else {
-        // 检查是否有用户信息
-        if (!userStore.userInfo) {
-          try {
-            // 获取用户信息
-            await userStore.fetchUserInfo()
-            
-            // 生成可访问路由
-            // TODO: 从后端获取路由配置
-            const routes = [] // await getRoutes()
-            permissionStore.generateRoutes(routes)
-            
-            // 动态添加路由
-            // routes.forEach(route => {
-            //   router.addRoute(route)
-            // })
-            
-            next({ ...to, replace: true })
-          } catch (error) {
-            // 获取用户信息失败，退出登录
-            await userStore.logout()
-            Message.error('获取用户信息失败，请重新登录')
-            next(`/login?redirect=${to.path}`)
+        // 权限验证
+        if (to.meta?.requiresAuth === false) {
+          next()
+        } else if (to.meta?.permissions || to.meta?.roles) {
+          // 检查权限
+          const hasPermission = checkPermission(to.meta, userStore)
+          if (hasPermission) {
+            next()
+          } else {
+            next('/403')
           }
         } else {
-          // 权限验证
-          if (to.meta?.requiresAuth === false) {
-            next()
-          } else if (to.meta?.permissions || to.meta?.roles) {
-            // 检查权限
-            const hasPermission = checkPermission(to.meta)
-            if (hasPermission) {
-              next()
-            } else {
-              next('/403')
-            }
-          } else {
-            next()
-          }
+          next()
         }
       }
     } else {
@@ -74,25 +64,26 @@ export function setupRouterGuard(router: Router) {
       }
     }
   })
-  
+
   // 全局后置守卫
-  router.afterEach((to) => {
+  router.afterEach((_to) => {
     // 结束进度条
     // NProgress.done()
   })
 }
 
 // 检查权限
-function checkPermission(meta: any): boolean {
-  const userStore = useUserStore()
-  
+function checkPermission(
+  meta: { roles?: string[]; permissions?: string[] },
+  userStore: { hasRole: (role: string) => boolean; hasPermission: (permission: string) => boolean }
+): boolean {
   if (meta.roles && meta.roles.length > 0) {
     return meta.roles.some((role: string) => userStore.hasRole(role))
   }
-  
+
   if (meta.permissions && meta.permissions.length > 0) {
     return meta.permissions.some((permission: string) => userStore.hasPermission(permission))
   }
-  
+
   return true
 }

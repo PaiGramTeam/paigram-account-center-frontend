@@ -1,5 +1,5 @@
 <template>
-  <div class="app-sidebar bg-white dark:bg-gray-900 h-full">
+  <div class="app-sidebar h-full border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
     <a-menu
       :selected-keys="selectedKeys"
       :open-keys="openKeys"
@@ -15,19 +15,15 @@
             <component :is="item.meta.icon" />
           </template>
           <template #title>{{ getMenuTitle(item) }}</template>
-          
-          <a-menu-item
-            v-for="child in item.children"
-            :key="child.path"
-            :disabled="child.meta?.disabled"
-          >
+
+          <a-menu-item v-for="child in item.children" :key="child.path" :disabled="child.meta?.disabled">
             <template #icon v-if="child.meta?.icon">
               <component :is="child.meta.icon" />
             </template>
             {{ getMenuTitle(child) }}
           </a-menu-item>
         </a-sub-menu>
-        
+
         <a-menu-item v-else :key="item.path" :disabled="item.meta?.disabled">
           <template #icon v-if="item.meta?.icon">
             <component :is="item.meta.icon" />
@@ -54,7 +50,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   collapsed: false,
   accordion: true,
-  useRouteMenu: true
+  useRouteMenu: true,
 })
 
 const route = useRoute()
@@ -79,7 +75,7 @@ const getMenuTitle = (item: MenuItem): string => {
     // 这里简单返回locale key，实际应用中需要使用i18n实例
     return item.meta.locale
   }
-  return item.meta?.title || item.name
+  return item.meta?.title || item.name || ''
 }
 
 // 获取当前路由对应的菜单路径
@@ -104,7 +100,10 @@ watch(
   (path) => {
     const menuPath = findMenuPath(computedMenuItems.value, path)
     if (menuPath.length > 0) {
-      selectedKeys.value = [menuPath[menuPath.length - 1]]
+      const lastKey = menuPath[menuPath.length - 1]
+      if (lastKey) {
+        selectedKeys.value = [lastKey]
+      }
       if (!props.collapsed && menuPath.length > 1) {
         openKeys.value = menuPath.slice(0, -1)
       }
@@ -119,23 +118,11 @@ const handleMenuClick = (key: string) => {
 }
 
 // 处理子菜单展开/收起
-const handleSubMenuClick = (key: string, openKeys: string[]) => {
+const handleSubMenuClick = (_key: string, newOpenKeys: string[]) => {
   if (!props.collapsed) {
-    openKeys.value = openKeys
+    openKeys.value = newOpenKeys
   }
 }
 </script>
 
-<style scoped>
-.app-sidebar {
-  border-right: 1px solid var(--color-border-1);
-}
-
-:deep(.arco-menu) {
-  height: 100%;
-}
-
-:deep(.arco-menu-vertical.arco-menu-collapsed) {
-  width: 48px;
-}
-</style>
+<style scoped></style>

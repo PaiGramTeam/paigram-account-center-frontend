@@ -4,8 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ArcoResolver } from 'unplugin-vue-components/resolvers'
+import path from 'node:path' // Add this import
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
@@ -13,20 +14,30 @@ export default defineConfig({
     AutoImport({
       resolvers: [ArcoResolver()],
       dts: 'src/types/auto-imports.d.ts',
-      imports: ['vue', 'vue-router', 'pinia']
+      imports: ['vue', 'vue-router', 'pinia'],
     }),
     Components({
       resolvers: [
         ArcoResolver({
-          sideEffect: true
-        })
+          sideEffect: true,
+          resolveIcons: true,
+        }),
       ],
-      dts: 'src/types/components.d.ts'
-    })
+      dts: 'src/types/components.d.ts',
+    }),
   ],
   resolve: {
     alias: {
-      '@': '/src'
-    }
-  }
+      '@': path.resolve(__dirname, './src'), // Modify this line
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api'),
+      },
+    },
+  },
 })
