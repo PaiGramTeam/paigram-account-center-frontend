@@ -2,6 +2,7 @@ import request from '../request'
 import type {
   RoleListParams,
   RoleListItem,
+  RoleListResponse,
   CreateRoleRequest,
   CreateRoleResponse,
   UpdateRoleRequest,
@@ -13,9 +14,9 @@ import type {
 
 export const roleApi = {
   // 获取角色列表（带分页）
-  async getList(params?: RoleListParams): Promise<{ data: RoleListItem[]; pagination: PaginationMeta }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return request.get('/roles', { params }) as any
+  async getList(params?: RoleListParams): Promise<RoleListResponse> {
+    const response = await request.get<RoleListResponse>('/roles', { params })
+    return response.data
   },
 
   // 获取角色详情

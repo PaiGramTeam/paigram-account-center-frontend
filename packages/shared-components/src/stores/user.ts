@@ -77,7 +77,24 @@ export const useUserStore = defineStore('user', {
     },
 
     hasPermission(permission: string): boolean {
-      return this.permissions.includes(permission) || this.permissions.includes('*')
+      // 如果有 * 通配符，拥有所有权限
+      if (this.permissions.includes('*')) {
+        return true
+      }
+
+      // 精确匹配权限
+      if (this.permissions.includes(permission)) {
+        return true
+      }
+
+      // 检查通配符模式 (例如 admin.* 匹配 admin.users.list)
+      return this.permissions.some((p) => {
+        if (p.endsWith('.*')) {
+          const prefix = p.slice(0, -2) // 移除 .*
+          return permission.startsWith(prefix + '.')
+        }
+        return false
+      })
     },
 
     hasRole(role: string): boolean {

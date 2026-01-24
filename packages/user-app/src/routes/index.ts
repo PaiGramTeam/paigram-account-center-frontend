@@ -59,7 +59,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/dashboard',
     name: 'DashboardLayout',
     component: () => import('@/layouts/index.vue'),
-    redirect: '/dashboard',
+    redirect: { name: 'Dashboard' },
     children: [
       {
         path: '',
@@ -86,7 +86,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/account',
     name: 'Account',
     component: () => import('@/layouts/index.vue'),
-    redirect: '/account/info',
+    redirect: { name: 'AccountInfo' },
     meta: { locale: 'menu.account', icon: 'icon-idcard', requiresAuth: true },
     children: [
       {
@@ -119,7 +119,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
     path: '/settings',
     name: 'Settings',
     component: () => import('@/layouts/index.vue'),
-    redirect: '/settings/general',
+    redirect: { name: 'GeneralSettings' },
     meta: { locale: 'menu.settings', icon: 'icon-settings', requiresAuth: true },
     children: [
       {

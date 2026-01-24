@@ -29,13 +29,19 @@ function generateMenuFromRoutes(routes: (RouteRecordNormalized | RouteRecordRaw)
 
   routes.forEach((route) => {
     // 过滤掉隐藏的路由
-    if (route.meta?.hidden) return
+    if (route.meta?.hidden || route.meta?.hideInMenu) return
 
     // 过滤掉没有名称的路由
     if (!route.name) return
 
-    // 过滤掉 Layout 路由
-    if (route.name === 'Layout') {
+    // 过滤掉不需要认证的路由（除了首页）
+    if (!route.meta?.requiresAuth && route.name !== 'Home') return
+
+    // 过滤掉 Layout 相关的路由
+    if (
+      route.name === 'Layout' ||
+      (typeof route.name === 'string' && route.name.endsWith('Layout') && route.name !== 'DashboardLayout')
+    ) {
       // 将 Layout 的子路由提取出来
       if (route.children && route.children.length > 0) {
         menu.push(...generateMenuFromRoutes(Array.from(route.children)))
@@ -50,7 +56,10 @@ function generateMenuFromRoutes(routes: (RouteRecordNormalized | RouteRecordRaw)
     }
 
     if (route.children && route.children.length > 0) {
-      menuItem.children = generateMenuFromRoutes(Array.from(route.children))
+      const childMenus = generateMenuFromRoutes(Array.from(route.children))
+      if (childMenus.length > 0) {
+        menuItem.children = childMenus
+      }
     }
 
     menu.push(menuItem)

@@ -11,9 +11,9 @@
       class="shadow-lg"
     >
       <!-- Logo 区域 -->
-      <div class="flex h-16 items-center justify-center bg-blue-600 px-4">
+      <div class="flex h-16 items-center justify-center overflow-hidden bg-blue-600 px-4">
         <transition name="fade" mode="out-in">
-          <h1 v-if="!collapsed" class="text-lg font-bold text-white">
+          <h1 v-if="!collapsed" class="truncate text-lg font-bold text-white">
             {{ appTitle }}
           </h1>
           <span v-else class="text-2xl font-bold text-white">
@@ -39,7 +39,7 @@
             <template #title>
               {{ translateMenuTitle(getMenuTitle(item.meta, item.name)) }}
             </template>
-            <a-menu-item v-for="child in item.children" :key="child.path">
+            <a-menu-item v-for="child in item.children" :key="getMenuItemKey(child, item.path)">
               <template #icon>
                 <component :is="child.meta?.icon" />
               </template>
@@ -48,7 +48,7 @@
           </a-sub-menu>
 
           <!-- 单独菜单项 -->
-          <a-menu-item v-else :key="item.path">
+          <a-menu-item v-else :key="getMenuItemKey(item)">
             <template #icon>
               <component :is="item.meta?.icon" />
             </template>
@@ -269,6 +269,23 @@ const getMenuTitle = (meta: Record<string, unknown> | undefined, name: string | 
   return ''
 }
 
+// 获取菜单项的完整路径作为 key
+const getMenuItemKey = (item: RouteRecordRaw, parentPath?: string): string => {
+  // 优先使用路由名称
+  if (item.name) {
+    return String(item.name)
+  }
+
+  // 如果有父路径，拼接完整路径
+  if (parentPath) {
+    const fullPath = parentPath.endsWith('/') ? parentPath + item.path : parentPath + '/' + item.path
+    return fullPath.startsWith('/') ? fullPath : '/' + fullPath
+  }
+
+  // 确保路径以 / 开头
+  return item.path.startsWith('/') ? item.path : '/' + item.path
+}
+
 // i18n 翻译包装函数，避免空 key 警告
 const translateMenuTitle = (title: string): string => {
   if (!title) return ''
@@ -278,13 +295,19 @@ const translateMenuTitle = (title: string): string => {
 // 监听路由变化
 watch(
   () => route.path,
-  (path) => {
-    // 更新选中的菜单
-    selectedKeys.value = [path]
+  () => {
+    // 使用路由名称作为选中的 key
+    if (route.name) {
+      selectedKeys.value = [String(route.name)]
+      console.log('路由变化，选中菜单:', route.name)
+    }
 
-    // 更新展开的菜单
+    // 更新展开的菜单（使用父路由名称）
     const matched = route.matched
-    openKeys.value = matched.filter((item) => item.path !== path).map((item) => item.path)
+    openKeys.value = matched
+      .filter((item) => item.name && item.name !== route.name)
+      .map((item) => (item.name ? String(item.name) : item.path))
+    console.log('展开的菜单:', openKeys.value)
   },
   { immediate: true }
 )
@@ -309,7 +332,19 @@ const toggleFullScreen = () => {
 }
 
 const handleMenuClick = (key: string) => {
-  router.push(key)
+  console.log('菜单点击:', key)
+
+  // 尝试通过路由名称导航
+  const route = router.getRoutes().find((r) => r.name === key)
+  if (route) {
+    console.log('找到路由，路径:', route.path)
+    router.push({ name: key })
+  } else {
+    // 如果不是路由名称，当作路径处理
+    console.log('作为路径处理:', key)
+    router.push(key)
+  }
+
   emit('menu-click', key)
 }
 

@@ -2,6 +2,7 @@ import request from '../request'
 import type {
   PermissionListParams,
   PermissionListItem,
+  PermissionListResponse,
   CreatePermissionRequest,
   CreatePermissionResponse,
   UpdatePermissionRequest,
@@ -13,9 +14,9 @@ import type {
 
 export const permissionApi = {
   // 获取权限列表（带分页）
-  async getList(params?: PermissionListParams): Promise<{ data: PermissionListItem[]; pagination: PaginationMeta }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return request.get('/permissions', { params }) as any
+  async getList(params?: PermissionListParams): Promise<PermissionListResponse> {
+    const response = await request.get<PermissionListResponse>('/permissions', { params })
+    return response.data
   },
 
   // 获取权限详情

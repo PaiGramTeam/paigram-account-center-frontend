@@ -50,6 +50,7 @@ export const asyncRoutes: RouteRecordRaw[] = [
           locale: 'menu.users',
           icon: 'icon-user-group',
           requiresAuth: true,
+          permissions: ['admin.users.list', 'admin.roles.list', 'admin.permissions.list'],
         },
         children: [
           {
@@ -98,10 +99,12 @@ export const asyncRoutes: RouteRecordRaw[] = [
       {
         path: 'system',
         name: 'System',
+        redirect: '/system/settings',
         meta: {
           locale: 'menu.system',
           icon: 'icon-settings',
           requiresAuth: true,
+          permissions: ['admin.system.settings', 'admin.system.logs', 'admin.system.backup'],
         },
         children: [
           {
@@ -145,6 +148,17 @@ export const asyncRoutes: RouteRecordRaw[] = [
           icon: 'icon-user',
           requiresAuth: true,
           hideInMenu: true,
+        },
+      },
+      {
+        path: 'debug',
+        name: 'Debug',
+        component: () => import('@/pages/debug.vue'),
+        meta: {
+          locale: 'menu.debug',
+          icon: 'icon-bug',
+          requiresAuth: true,
+          hideInMenu: false,
         },
       },
     ],

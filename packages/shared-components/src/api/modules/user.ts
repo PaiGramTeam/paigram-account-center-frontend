@@ -10,6 +10,7 @@ import type {
   UnbindAccountResponse,
   UserListParams,
   UserListItem,
+  UserListResponse,
   CreateUserRequest,
   CreateUserResponse,
   UpdateUserRequest,
@@ -20,9 +21,9 @@ import type {
 
 export const userApi = {
   // 获取用户列表（带分页和搜索）
-  async getList(params?: UserListParams): Promise<{ data: UserListItem[]; pagination: PaginationMeta }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return request.get('/users', { params }) as any
+  async getList(params?: UserListParams): Promise<UserListResponse> {
+    const response = await request.get<UserListResponse>('/users', { params })
+    return response.data
   },
 
   // 获取用户详情
