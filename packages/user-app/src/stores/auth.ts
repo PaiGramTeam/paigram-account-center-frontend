@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@paigram/shared-components'
-import { authApi, profileApi } from '@paigram/shared-components'
+import { authApi, profileApi } from '@/api'
 import type {
   LoginEmailRequest,
   RegisterEmailRequest,

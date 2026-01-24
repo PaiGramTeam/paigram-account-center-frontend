@@ -158,10 +158,14 @@ import {
   IconUser,
   IconDown,
 } from '@arco-design/web-vue/es/icon'
-import { userApi } from '../../api'
-import type { UserListItem } from '../../api/types'
+import type { UserListItem, UserListParams, UserListResponse } from '../../api/types'
 
 interface Props {
+  // API 实例（必需）
+  userApi: {
+    getList: (params?: UserListParams) => Promise<UserListResponse>
+  }
+
   // 功能开关
   showSearch?: boolean
   showActions?: boolean
@@ -338,7 +342,7 @@ const fetchUsers = async () => {
       status: searchForm.status,
     }
 
-    const response = await userApi.getList(params)
+    const response = await props.userApi.getList(params)
     tableData.value = response.data
     pagination.total = response.pagination.total
   } catch (_error) {

@@ -149,7 +149,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FormInstance } from '@arco-design/web-vue'
 import { IconUser } from '@arco-design/web-vue/es/icon'
-import { PageHeader, useUserStore, profileApi } from '@paigram/shared-components'
+import { PageHeader, useUserStore } from '@paigram/shared-components'
+import { profileApi } from '@/api'
 
 const userStore = useUserStore()
 

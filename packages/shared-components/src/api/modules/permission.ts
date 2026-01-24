@@ -1,4 +1,4 @@
-import request from '../request'
+import type { createRequest } from '../request'
 import type {
   PermissionListParams,
   PermissionListItem,
@@ -12,30 +12,32 @@ import type {
   PaginationMeta,
 } from '../types'
 
-export const permissionApi = {
-  // 获取权限列表（带分页）
-  async getList(params?: PermissionListParams): Promise<PermissionListResponse> {
-    const response = await request.get<PermissionListResponse>('/permissions', { params })
-    return response.data
-  },
+export function createPermissionApi(request: ReturnType<typeof createRequest>) {
+  return {
+    // 获取权限列表（带分页）
+    async getList(params?: PermissionListParams): Promise<PermissionListResponse> {
+      const response = await request.get<PermissionListResponse>('/permissions', { params })
+      return response.data
+    },
 
-  // 获取权限详情
-  async getDetail(id: number | string): Promise<PermissionDetailResponse> {
-    return request.get(`/permissions/${id}`)
-  },
+    // 获取权限详情
+    async getDetail(id: number | string): Promise<PermissionDetailResponse> {
+      return request.get(`/permissions/${id}`)
+    },
 
-  // 创建权限
-  async create(data: CreatePermissionRequest): Promise<CreatePermissionResponse> {
-    return request.post('/permissions', data)
-  },
+    // 创建权限
+    async create(data: CreatePermissionRequest): Promise<CreatePermissionResponse> {
+      return request.post('/permissions', data)
+    },
 
-  // 更新权限
-  async update(id: number | string, data: UpdatePermissionRequest): Promise<UpdatePermissionResponse> {
-    return request.patch(`/permissions/${id}`, data)
-  },
+    // 更新权限
+    async update(id: number | string, data: UpdatePermissionRequest): Promise<UpdatePermissionResponse> {
+      return request.patch(`/permissions/${id}`, data)
+    },
 
-  // 删除权限
-  async delete(id: number | string): Promise<DeletePermissionResponse> {
-    return request.delete(`/permissions/${id}`)
-  },
+    // 删除权限
+    async delete(id: number | string): Promise<DeletePermissionResponse> {
+      return request.delete(`/permissions/${id}`)
+    },
+  }
 }

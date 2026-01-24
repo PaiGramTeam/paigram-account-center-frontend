@@ -152,7 +152,3 @@ function getDefaultErrorMessage(status: number): string {
       return '请求失败'
   }
 }
-
-// 默认导出（向后兼容）
-export const request = createRequest()
-export default request

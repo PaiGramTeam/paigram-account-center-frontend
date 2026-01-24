@@ -129,7 +129,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconPlus, IconEmpty, IconInfoCircle, IconCheckCircle } from '@arco-design/web-vue/es/icon'
-import { profileApi, useUserStore } from '@paigram/shared-components'
+import { useUserStore } from '@paigram/shared-components'
+import { profileApi } from '@/api'
 import type { BoundAccount } from '@paigram/shared-components'
 
 // 自定义 Provider 图标组件

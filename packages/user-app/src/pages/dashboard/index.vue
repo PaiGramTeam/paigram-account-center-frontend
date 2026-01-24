@@ -182,7 +182,8 @@ import {
   IconCamera,
   IconSettings,
 } from '@arco-design/web-vue/es/icon'
-import { useUserStore, profileApi } from '@paigram/shared-components'
+import { useUserStore } from '@paigram/shared-components'
+import { profileApi } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()

@@ -174,7 +174,7 @@ import {
   IconSettings,
   IconCloudDownload,
 } from '@arco-design/web-vue/es/icon'
-import { userApi } from '@paigram/shared-components'
+import { userApi } from '@/api'
 import type { UserListItem } from '@paigram/shared-components'
 
 const router = useRouter()

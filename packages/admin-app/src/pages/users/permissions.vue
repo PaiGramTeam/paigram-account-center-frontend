@@ -134,7 +134,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconPlus, IconEdit, IconDelete } from '@arco-design/web-vue/es/icon'
-import { permissionApi } from '@paigram/shared-components'
+import { permissionApi } from '@/api'
 import type { PermissionListItem, CreatePermissionRequest, UpdatePermissionRequest } from '@paigram/shared-components'
 
 // 表格列定义

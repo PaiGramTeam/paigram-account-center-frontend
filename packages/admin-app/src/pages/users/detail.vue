@@ -162,7 +162,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconUser, IconEmail, IconInfoCircle } from '@arco-design/web-vue/es/icon'
 import type { FormInstance } from '@arco-design/web-vue'
-import { userApi } from '@paigram/shared-components'
+import { userApi } from '@/api'
 import type { UserDetail, UpdateUserRequest } from '@paigram/shared-components'
 
 const route = useRoute()

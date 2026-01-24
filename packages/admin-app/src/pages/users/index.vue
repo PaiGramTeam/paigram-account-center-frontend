@@ -10,6 +10,7 @@
     <!-- 用户表格 -->
     <UserTable
       ref="userTableRef"
+      :user-api="userApi"
       :can-create="hasPermission('user.create')"
       :can-edit="hasPermission('user.edit')"
       :can-delete="hasPermission('user.delete')"
@@ -152,7 +153,8 @@
 import { ref, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FormInstance } from '@arco-design/web-vue'
-import { UserTable, UserCard, PageHeader, useUserStore, userApi } from '@paigram/shared-components'
+import { UserTable, UserCard, PageHeader, useUserStore } from '@paigram/shared-components'
+import { userApi } from '@/api'
 import type { UserDetail, UserListItem } from '@paigram/shared-components'
 
 const userStore = useUserStore()

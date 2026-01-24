@@ -210,7 +210,7 @@ import { ref, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconComputer } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@paigram/shared-components'
-import { securityApi } from '@paigram/shared-components'
+import { securityApi } from '@/api'
 import type { Device } from '@paigram/shared-components'
 
 // Stores

@@ -105,7 +105,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { Message, Modal } from '@arco-design/web-vue'
 import { IconPlus, IconEdit, IconDelete } from '@arco-design/web-vue/es/icon'
-import { roleApi } from '@paigram/shared-components'
+import { roleApi } from '@/api'
 import type { RoleListItem, CreateRoleRequest, UpdateRoleRequest } from '@paigram/shared-components'
 
 // 表格列定义

@@ -48,7 +48,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconCloseCircleFill, IconCheckCircleFill, IconRefresh } from '@arco-design/web-vue/es/icon'
-import { authApi } from '@paigram/shared-components'
+import { authApi } from '@/api'
 
 const route = useRoute()
 const router = useRouter()

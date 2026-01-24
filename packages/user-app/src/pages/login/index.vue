@@ -90,7 +90,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
-import { authApi } from '@paigram/shared-components'
+import { authApi } from '@/api'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 
