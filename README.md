@@ -153,6 +153,65 @@ bun run pages:deploy:admin
 
 这两个脚本会先本地构建，再把对应的 `dist` 目录上传到 Cloudflare Pages。
 
+### 8. GitHub Actions 自动部署
+
+仓库已提供工作流 `/.github/workflows/deploy-pages.yml`，默认不会在普通 `push` 时自动发布，从而避免未验证版本直接上线。
+
+同时仓库还提供了 `/.github/workflows/ci.yml`，会在 `pull_request` 和 `main` 分支 `push` 时执行基础校验：
+
+- `bun install --frozen-lockfile`
+- `bun run type-check`
+- `bun run build:all`
+
+这样可以先在 PR / 合并阶段发现问题，再由 Release 流程负责真正的生产部署。
+
+支持两种触发方式：
+
+- 发布 GitHub Release 时自动部署到生产环境
+- 在 Actions 页面手动触发 `workflow_dispatch`
+
+#### Release 发布策略
+
+当你在 GitHub 上创建并发布 Release 后，工作流会：
+
+- 检出对应的 tag
+- 安装依赖并执行 `bun run type-check`
+- 分别构建 user/admin 两个客户端
+- 将两个客户端直传部署到各自的 Cloudflare Pages 项目
+
+这样只有打过 tag 并正式发布的版本才会自动上线。
+
+#### 手动触发策略
+
+你也可以在 GitHub Actions 页面手动执行该工作流，并指定：
+
+- `target`：`both`、`user`、`admin`
+- `deployment_mode`：`production`、`preview`
+- `ref`：要部署的 branch、tag 或 commit SHA
+
+推荐把未最终确认的版本先以 `preview` 模式手动部署，确认后再发布 Release 触发正式生产部署。
+
+#### 需要配置的 GitHub Secrets
+
+- `CLOUDFLARE_API_TOKEN`
+- `CLOUDFLARE_ACCOUNT_ID`
+- `CF_PAGES_USER_API_BASE_URL`
+- `CF_PAGES_USER_TURNSTILE_SITE_KEY`
+- `CF_PAGES_ADMIN_API_BASE_URL`
+- `CF_PAGES_ADMIN_TURNSTILE_SITE_KEY`
+
+#### 需要配置的 GitHub Variables
+
+- `BUN_VERSION`，例如 `1.2.15`
+- `CF_PAGES_PROJECT_USER`
+- `CF_PAGES_PROJECT_ADMIN`
+
+#### 推荐的额外保护
+
+建议在 GitHub 仓库中创建 environment `cloudflare-pages-production`，并为它配置 required reviewers。这样即使 Release 已经发布，生产部署也需要人工审批后才会真正执行。
+
+如果你也希望手动触发的预览部署走独立保护，可以额外创建 `cloudflare-pages-preview` environment；否则预览环境会直接运行。
+
 ## 目录结构说明
 
 每个应用（user-app 和 admin-app）都包含以下目录结构：
