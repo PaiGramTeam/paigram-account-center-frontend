@@ -87,11 +87,11 @@ export const useUserStore = defineStore('user', {
         return true
       }
 
-      // 检查通配符模式 (例如 admin.* 匹配 admin.users.list)
+      // 检查通配符模式 (例如 user:* 匹配 user:read)
       return this.permissions.some((p) => {
-        if (p.endsWith('.*')) {
-          const prefix = p.slice(0, -2) // 移除 .*
-          return permission.startsWith(prefix + '.')
+        if (p.endsWith(':*')) {
+          const prefix = p.slice(0, -2)
+          return permission.startsWith(prefix + ':')
         }
         return false
       })

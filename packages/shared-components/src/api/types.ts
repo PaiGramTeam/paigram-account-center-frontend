@@ -82,7 +82,7 @@ export interface UserListItem {
   created_at: string
 }
 
-export type UserStatus = 'active' | 'inactive' | 'pending' | 'suspended'
+export type UserStatus = 'active' | 'pending' | 'suspended' | 'deleted'
 export type LoginType = 'email' | 'telegram' | 'google' | 'github'
 
 // 分页参数
@@ -459,7 +459,7 @@ export interface RoleDetailResponse {
 // 权限列表项类型
 export interface PermissionListItem {
   id: number
-  name: string // 权限唯一标识，如 "user.read"
+  name: string // 权限唯一标识，如 "user:read"
   display_name: string // 显示名称，如 "查看用户"
   description: string // 权限描述
   category: string // 权限分类，如 "user_management"

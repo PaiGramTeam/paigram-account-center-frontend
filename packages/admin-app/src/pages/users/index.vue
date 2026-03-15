@@ -11,12 +11,12 @@
     <UserTable
       ref="userTableRef"
       :user-api="userApi"
-      :can-create="hasPermission('user.create')"
-      :can-edit="hasPermission('user.edit')"
-      :can-delete="hasPermission('user.delete')"
-      :can-batch-delete="hasPermission('user.batch-delete')"
-      :can-reset-password="hasPermission('user.reset-password')"
-      :can-toggle-status="hasPermission('user.toggle-status')"
+      :can-create="hasPermission('user:write')"
+      :can-edit="hasPermission('user:write')"
+      :can-delete="hasPermission('user:delete')"
+      :can-batch-delete="hasPermission('user:delete')"
+      :can-reset-password="hasPermission('user:manage')"
+      :can-toggle-status="hasPermission('user:manage')"
       @view="handleViewUser"
       @edit="handleEditUser"
       @create="handleCreateUser"
@@ -140,8 +140,9 @@
         <a-form-item field="status" label="账号状态">
           <a-radio-group v-model="editForm.status">
             <a-radio value="active">正常</a-radio>
-            <a-radio value="inactive">未激活</a-radio>
+            <a-radio value="pending">待处理</a-radio>
             <a-radio value="suspended">已停用</a-radio>
+            <a-radio value="deleted">已删除</a-radio>
           </a-radio-group>
         </a-form-item>
       </a-form>
@@ -207,9 +208,9 @@ const editRules = {
 const getStatusColor = (status: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-    inactive: 'orange',
-    suspended: 'red',
     pending: 'blue',
+    suspended: 'red',
+    deleted: 'gray',
   }
   return colorMap[status] || 'gray'
 }
@@ -218,9 +219,9 @@ const getStatusColor = (status: string): string => {
 const getStatusText = (status: string): string => {
   const textMap: Record<string, string> = {
     active: '正常',
-    inactive: '未激活',
+    pending: '待处理',
     suspended: '已停用',
-    pending: '待审核',
+    deleted: '已删除',
   }
   return textMap[status] || '未知'
 }
@@ -251,7 +252,7 @@ const createMockUserDetail = (user: UserListItem): UserDetail => {
     email: user.primary_email,
     email_verified: true,
     phone: '+86 138xxxx1234',
-    permissions: ['user.read', 'user.write'],
+    permissions: ['user:read', 'user:write'],
     last_login_ip: '192.168.1.100',
     last_login_device: 'Chrome 120.0 / Windows',
     login_methods: [user.primary_login_type || 'email'],
@@ -300,7 +301,7 @@ const handleSaveUser = async () => {
         display_name: editForm.display_name,
         password: editForm.password,
         roles: editForm.roles,
-        status: editForm.status as 'active' | 'inactive' | 'pending' | 'suspended',
+        status: editForm.status as 'active' | 'pending' | 'suspended' | 'deleted',
       })
       Message.success('创建成功')
     } else {
@@ -309,7 +310,7 @@ const handleSaveUser = async () => {
         await userApi.update(currentUser.value.id, {
           display_name: editForm.display_name,
           roles: editForm.roles,
-          status: editForm.status as 'active' | 'inactive' | 'pending' | 'suspended',
+          status: editForm.status as 'active' | 'pending' | 'suspended' | 'deleted',
         })
         Message.success('更新成功')
       }

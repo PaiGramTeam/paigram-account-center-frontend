@@ -18,9 +18,9 @@
             <a-form-item field="status" label="状态">
               <a-select v-model="searchForm.status" placeholder="选择状态" allow-clear>
                 <a-option value="active">正常</a-option>
-                <a-option value="inactive">未激活</a-option>
+                <a-option value="pending">待处理</a-option>
                 <a-option value="suspended">已停用</a-option>
-                <a-option value="pending">待审核</a-option>
+                <a-option value="deleted">已删除</a-option>
               </a-select>
             </a-form-item>
           </a-col>
@@ -307,9 +307,9 @@ const tableColumns = computed<TableColumnData[]>(() => {
 const getStatusColor = (status: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-    inactive: 'orange',
-    suspended: 'red',
-    pending: 'blue',
+      pending: 'blue',
+      suspended: 'red',
+      deleted: 'gray',
   }
   return colorMap[status] || 'gray'
 }
@@ -318,9 +318,9 @@ const getStatusColor = (status: string): string => {
 const getStatusText = (status: string): string => {
   const textMap: Record<string, string> = {
     active: '正常',
-    inactive: '未激活',
-    suspended: '已停用',
-    pending: '待审核',
+      pending: '待处理',
+      suspended: '已停用',
+      deleted: '已删除',
   }
   return textMap[status] || '未知'
 }

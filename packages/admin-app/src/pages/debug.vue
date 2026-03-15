@@ -180,17 +180,15 @@ const refreshData = () => {
 const mockAdminPermissions = () => {
   if (userStore.userInfo) {
     userStore.userInfo.permissions = [
-      'admin.dashboard',
-      'admin.users.list',
-      'admin.users.view',
-      'admin.users.create',
-      'admin.users.update',
-      'admin.users.delete',
-      'admin.roles.list',
-      'admin.permissions.list',
-      'admin.system.settings',
-      'admin.system.logs',
-      'admin.system.backup',
+      'user:read',
+      'user:write',
+      'user:delete',
+      'user:manage',
+      'role:read',
+      'role:write',
+      'permission:read',
+      'permission:write',
+      'audit:read',
     ]
     userStore.userInfo.roles = ['admin']
     Message.success('已设置管理员权限，菜单应该全部显示')
@@ -201,7 +199,7 @@ const mockAdminPermissions = () => {
 
 const mockUserPermissions = () => {
   if (userStore.userInfo) {
-    userStore.userInfo.permissions = ['admin.dashboard', 'admin.users.list']
+    userStore.userInfo.permissions = ['user:read', 'audit:read']
     userStore.userInfo.roles = ['user']
     Message.success('已设置普通用户权限，只显示部分菜单')
   } else {

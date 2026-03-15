@@ -139,8 +139,9 @@
         <a-form-item field="status" label="账号状态">
           <a-radio-group v-model="editForm.status">
             <a-radio value="active">正常</a-radio>
-            <a-radio value="inactive">未激活</a-radio>
+            <a-radio value="pending">待处理</a-radio>
             <a-radio value="suspended">已停用</a-radio>
+            <a-radio value="deleted">已删除</a-radio>
           </a-radio-group>
         </a-form-item>
 
@@ -190,9 +191,9 @@ const editRules = {
 const getStatusColor = (status: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-    inactive: 'orange',
-    suspended: 'red',
     pending: 'blue',
+    suspended: 'red',
+    deleted: 'gray',
   }
   return colorMap[status] || 'gray'
 }
@@ -201,9 +202,9 @@ const getStatusColor = (status: string): string => {
 const getStatusText = (status: string): string => {
   const textMap: Record<string, string> = {
     active: '正常',
-    inactive: '未激活',
+    pending: '待处理',
     suspended: '已停用',
-    pending: '待审核',
+    deleted: '已删除',
   }
   return textMap[status] || '未知'
 }
@@ -250,7 +251,7 @@ const handleEdit = (): void => {
   if (!userDetail.value) return
 
   editForm.display_name = userDetail.value.display_name
-  editForm.status = userDetail.value.status as 'active' | 'inactive' | 'pending' | 'suspended'
+  editForm.status = userDetail.value.status as 'active' | 'pending' | 'suspended' | 'deleted'
   editForm.locale = userDetail.value.locale || ''
   editVisible.value = true
 }

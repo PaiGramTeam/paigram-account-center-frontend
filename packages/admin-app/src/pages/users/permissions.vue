@@ -104,10 +104,10 @@
           <a-input
             v-model="formData.name"
             :disabled="modalMode === 'edit'"
-            placeholder="请输入权限名称（如 user.read）"
+            placeholder="请输入权限名称（如 user:read）"
           />
           <template #extra>
-            <span class="text-xs text-gray-500">格式：模块.操作（如 user.read、user.write）</span>
+            <span class="text-xs text-gray-500">格式：资源:动作（如 user:read、user:write）</span>
           </template>
         </a-form-item>
         <a-form-item label="显示名称" :rules="[{ required: true, message: '请输入显示名称' }]" field="display_name">

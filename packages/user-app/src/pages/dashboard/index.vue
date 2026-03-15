@@ -213,9 +213,9 @@ const recentActivities = ref([
 const getStatusColor = (status?: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-    inactive: 'orange',
-    suspended: 'red',
     pending: 'blue',
+    suspended: 'red',
+    deleted: 'gray',
   }
   return colorMap[status || ''] || 'gray'
 }
@@ -224,9 +224,9 @@ const getStatusColor = (status?: string): string => {
 const getStatusText = (status?: string): string => {
   const textMap: Record<string, string> = {
     active: '正常',
-    inactive: '未激活',
+    pending: '待处理',
     suspended: '已停用',
-    pending: '待审核',
+    deleted: '已删除',
   }
   return textMap[status || ''] || '未知'
 }
