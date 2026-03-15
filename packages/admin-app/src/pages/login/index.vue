@@ -50,20 +50,42 @@
           {{ showTwoFactorStep ? '验证并进入控制台' : '登录' }}
         </a-button>
       </a-form>
+
+      <a-divider v-if="!showTwoFactorStep" class="!my-8 !border-slate-200">
+        <span class="text-xs font-medium uppercase tracking-[0.3em] text-slate-400">OAuth</span>
+      </a-divider>
+
+      <div v-if="!showTwoFactorStep" class="grid grid-cols-2 gap-3">
+        <a-button
+          v-for="provider in oauthProviders"
+          :key="provider.name"
+          size="large"
+          class="!border-slate-200 !bg-slate-50 !text-slate-700 hover:!border-sky-200 hover:!bg-sky-50"
+          @click="handleOAuthLogin(provider.name)"
+        >
+          <template #icon>
+            <component :is="provider.icon" />
+          </template>
+          {{ provider.label }}
+        </a-button>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { nextTick, reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { AuthTwoFactorStep, TurnstileWidget } from '@paigram/shared-components'
-import { useAuthStore } from '@/stores/auth'
+import { IconGithub, IconGoogle } from '@arco-design/web-vue/es/icon'
+import { AuthTwoFactorStep, TurnstileWidget, useUserStore } from '@paigram/shared-components'
+import { resolveAdminPostLoginRoute, useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const loading = ref(false)
 const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 const captchaToken = ref('')
@@ -85,6 +107,11 @@ const rules = {
   password: [{ required: true, message: '请输入密码' }],
   totp_code: [{ minLength: 6, message: '验证码长度不能少于6位' }],
 }
+
+const oauthProviders = [
+  { name: 'google', label: 'Google', icon: IconGoogle },
+  { name: 'github', label: 'GitHub', icon: IconGithub },
+]
 
 interface FormSubmitData {
   values: LoginEmailRequest
@@ -126,8 +153,9 @@ const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> =
       return
     }
 
-    // 跳转到控制台
-    await router.push('/dashboard')
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    const fallbackPath = resolveAdminPostLoginRoute(userStore.permissions)
+    await router.push(redirect || fallbackPath)
   } catch (error: unknown) {
     console.error('Login failed:', error)
     if (isCaptchaError(error)) {
@@ -162,6 +190,21 @@ const handleCaptchaError = (message: string): void => {
   captchaToken.value = ''
   loginForm.captcha_token = undefined
   Message.warning(message)
+}
+
+const handleOAuthLogin = async (provider: string): Promise<void> => {
+  try {
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+    const callbackURL = new URL(`${window.location.origin}/auth/callback/${provider}`)
+    if (redirect) {
+      callbackURL.searchParams.set('redirect_to', redirect)
+    }
+
+    const authURL = await authStore.initiateOAuth(provider, callbackURL.toString())
+    window.location.href = authURL
+  } catch (_error) {
+    Message.error('OAuth 登录初始化失败')
+  }
 }
 
 function isCaptchaError(error: unknown): boolean {

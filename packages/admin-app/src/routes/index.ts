@@ -10,6 +10,12 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: { locale: 'common.login', requiresAuth: false, hideInMenu: true },
   },
   {
+    path: '/auth/callback/:provider',
+    name: 'OAuthCallback',
+    component: () => import('@/pages/auth/oauth-callback.vue'),
+    meta: { requiresAuth: false, hideInMenu: true },
+  },
+  {
     path: '/404',
     name: 'NotFound',
     component: () => import('@/pages/error/404.vue'),

@@ -2,7 +2,13 @@ import { defineStore } from 'pinia'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@paigram/shared-components'
 import { authApi, userApi } from '@/api'
-import type { LoginChallengeResponseData, LoginEmailRequest, LoginResponseData, UserStatus } from '@paigram/shared-components'
+import type {
+  LoginChallengeResponseData,
+  LoginEmailRequest,
+  LoginResponseData,
+  OAuthCallbackRequest,
+  UserStatus,
+} from '@paigram/shared-components'
 
 interface AuthState {
   loading: boolean
@@ -12,6 +18,26 @@ interface AuthState {
 export interface LoginWithEmailResult {
   status: 'success' | 'requires_totp'
   message?: string
+}
+
+export function resolveAdminPostLoginRoute(permissions: string[]): string {
+  if (permissions.includes('user:read')) {
+    return '/dashboard'
+  }
+
+  if (permissions.includes('role:read')) {
+    return '/users/roles'
+  }
+
+  if (permissions.includes('permission:read')) {
+    return '/users/permissions'
+  }
+
+  if (permissions.includes('audit:read')) {
+    return '/system/settings'
+  }
+
+  return '/403'
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -89,6 +115,46 @@ export const useAuthStore = defineStore('auth', {
         console.error('Failed to fetch user profile:', error)
         Message.error('获取用户信息失败')
         throw error
+      }
+    },
+
+    async initiateOAuth(provider: string, redirectTo?: string): Promise<string> {
+      try {
+        const response = await authApi.initiateOAuth(provider, {
+          redirect_to: redirectTo,
+        })
+
+        return response.data.auth_url
+      } catch (error) {
+        Message.error('OAuth 初始化失败')
+        throw error
+      }
+    },
+
+    async handleOAuthCallback(provider: string, callbackData: OAuthCallbackRequest): Promise<string> {
+      this.loading = true
+      const userStore = useUserStore()
+
+      try {
+        const response = await authApi.handleOAuthCallback(provider, callbackData)
+
+        userStore.setAuthData({
+          accessToken: response.data.access_token,
+          refreshToken: response.data.refresh_token,
+        })
+
+        await this.fetchUserProfile(response.data.user_id)
+
+        this.loginType = 'oauth'
+        Message.success('登录成功')
+        return resolveAdminPostLoginRoute(userStore.permissions)
+      } catch (error) {
+        console.error('OAuth callback error:', error)
+        const err = error as { error?: string; message?: string }
+        Message.error(err.error || err.message || 'OAuth 登录失败')
+        throw error
+      } finally {
+        this.loading = false
       }
     },
 
