@@ -74,6 +74,28 @@
       </div>
     </a-card>
 
+    <a-card title="安全概览" :bordered="false" class="shadow-sm">
+      <a-descriptions :column="{ xs: 1, sm: 2, md: 4 }" bordered>
+        <a-descriptions-item label="活跃会话">
+          {{ securitySummary?.active_session_count ?? 0 }}
+        </a-descriptions-item>
+        <a-descriptions-item label="设备数量">
+          {{ securitySummary?.device_count ?? 0 }}
+        </a-descriptions-item>
+        <a-descriptions-item label="近 30 天失败登录">
+          {{ securitySummary?.failed_logins_last_30_days ?? 0 }}
+        </a-descriptions-item>
+        <a-descriptions-item label="最近登录">
+          {{ formatAbsoluteDate(securitySummary?.last_login_at) }}
+        </a-descriptions-item>
+      </a-descriptions>
+      <div class="mt-4 text-sm text-gray-500">
+        最近登录 IP：{{ securitySummary?.last_login_ip || '-' }}
+        <span class="mx-2">·</span>
+        最近登录设备：{{ securitySummary?.last_login_device || '-' }}
+      </div>
+    </a-card>
+
     <!-- 登录设备管理 -->
     <a-card title="登录设备" :bordered="false" class="shadow-sm">
       <a-spin :loading="devicesLoading" class="w-full">
@@ -210,8 +232,8 @@ import { ref, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import { IconComputer } from '@arco-design/web-vue/es/icon'
 import { useUserStore } from '@paigram/shared-components'
-import { securityApi } from '@/api'
-import type { Device } from '@paigram/shared-components'
+import { securityApi, userApi } from '@/api'
+import type { Device, UserSecuritySummary } from '@paigram/shared-components'
 
 // Stores
 const userStore = useUserStore()
@@ -248,6 +270,7 @@ const twoFactorData = ref<{
 } | null>(null)
 
 const devices = ref<Device[]>([])
+const securitySummary = ref<UserSecuritySummary | null>(null)
 
 // 修改密码
 const handleChangePassword = async (): Promise<void> => {
@@ -317,6 +340,7 @@ const handleConfirm2FA = async (): Promise<void> => {
     Message.success('双因素认证已启用')
     twoFactorEnabled.value = true
     enable2FAModalVisible.value = false
+    await fetchSecuritySummary()
 
     // 重置表单
     confirm2FAForm.value.code = ''
@@ -352,6 +376,7 @@ const handleDisable2FA = async (): Promise<void> => {
     Message.success('双因素认证已禁用')
     twoFactorEnabled.value = false
     disable2FAModalVisible.value = false
+    await fetchSecuritySummary()
 
     // 重置表单
     disable2FAForm.value = {
@@ -385,6 +410,20 @@ const fetchDevices = async (): Promise<void> => {
   }
 }
 
+// 获取安全概览
+const fetchSecuritySummary = async (): Promise<void> => {
+  if (!userStore.userId) return
+
+  try {
+    const response = await userApi.getSecuritySummary(userStore.userId)
+    securitySummary.value = response.data
+    twoFactorEnabled.value = response.data.two_factor_enabled
+  } catch (error) {
+    console.error('Fetch security summary error:', error)
+    Message.error('获取安全概览失败')
+  }
+}
+
 // 移除设备
 const handleRemoveDevice = async (deviceId: string): Promise<void> => {
   if (!userStore.userId) {
@@ -396,6 +435,7 @@ const handleRemoveDevice = async (deviceId: string): Promise<void> => {
     await securityApi.removeDevice(userStore.userId, deviceId)
     Message.success('设备已移除')
     await fetchDevices() // 刷新列表
+    await fetchSecuritySummary()
   } catch (error) {
     console.error('Remove device error:', error)
     const err = error as { error?: string; message?: string }
@@ -444,13 +484,14 @@ const formatDate = (dateString: string): string => {
   })
 }
 
+const formatAbsoluteDate = (dateString?: string): string => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleString('zh-CN')
+}
+
 // 页面加载时获取数据
 onMounted(async () => {
-  await fetchDevices()
-
-  // TODO: 从用户 profile 获取 2FA 状态
-  // 目前先设置为 false，实际应该从 userStore.userInfo 或 API 获取
-  twoFactorEnabled.value = false
+  await Promise.all([fetchDevices(), fetchSecuritySummary()])
 })
 </script>
 

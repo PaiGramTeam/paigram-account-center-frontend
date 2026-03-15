@@ -17,6 +17,7 @@ import type {
   UpdateUserResponse,
   UserDetail,
   UserAuditLogItem,
+  UserLoginLogItem,
   UserSecuritySummary,
   UserSessionItem,
 } from '../types'
@@ -62,6 +63,11 @@ export function createUserApi(request: ReturnType<typeof createRequest>) {
     // 获取用户审计日志
     async getAuditLogs(id: number | string, params?: { page?: number; page_size?: number; action_type?: string }) {
       return request.get<PaginatedResponse<UserAuditLogItem>>(`/users/${id}/audit-logs`, { params })
+    },
+
+    // 获取用户登录日志
+    async getLoginLogs(id: number | string, params?: { page?: number; page_size?: number; status?: 'success' | 'failed' }) {
+      return request.get<PaginatedResponse<UserLoginLogItem>>(`/users/${id}/login-logs`, { params })
     },
 
     // 获取用户会话列表

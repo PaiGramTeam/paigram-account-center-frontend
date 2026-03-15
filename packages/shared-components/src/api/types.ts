@@ -178,6 +178,19 @@ export interface UserSecuritySummary {
   last_login_location?: string
 }
 
+export interface UserLoginLogItem {
+  id: number
+  user_id: number
+  login_type: string
+  ip: string
+  user_agent?: string
+  device?: string
+  location?: string
+  status: 'success' | 'failed'
+  failure_reason?: string
+  created_at: string
+}
+
 // 刷新 Token 请求
 export interface RefreshTokenRequest {
   refresh_token: string
