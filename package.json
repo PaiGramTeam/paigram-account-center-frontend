@@ -7,11 +7,13 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:user": "cd packages/user-app && bun run dev",
-    "dev:admin": "cd packages/admin-app && bun run dev",
-    "build:user": "cd packages/user-app && bun run build",
-    "build:admin": "cd packages/admin-app && bun run build",
+    "dev:user": "bun run --cwd packages/user-app dev",
+    "dev:admin": "bun run --cwd packages/admin-app dev",
+    "build:user": "bun run --cwd packages/user-app build",
+    "build:admin": "bun run --cwd packages/admin-app build",
     "build:all": "bun run build:user && bun run build:admin",
+    "pages:deploy:user": "bun run build:user && bunx wrangler pages deploy packages/user-app/dist --config cloudflare/wrangler.user.toml",
+    "pages:deploy:admin": "bun run build:admin && bunx wrangler pages deploy packages/admin-app/dist --config cloudflare/wrangler.admin.toml",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"**/*.{js,ts,jsx,tsx,vue,json,md}\"",

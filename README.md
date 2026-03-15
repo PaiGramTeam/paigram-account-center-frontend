@@ -51,6 +51,108 @@ bun run build:admin
 bun run build:all
 ```
 
+## Cloudflare Pages 部署
+
+当前前端包含两个可独立部署的 SPA：
+
+- `packages/user-app`：用户端
+- `packages/admin-app`：管理端
+
+`packages/shared-components` 是共享 workspace 包，只参与构建，不需要单独部署到 Cloudflare Pages。
+
+推荐为两个客户端分别创建两个 Cloudflare Pages 项目，而不是在一个 Pages 项目中同时承载两个客户端。这样可以避免路由根路径冲突，也便于分别配置域名和环境变量。
+
+### 1. 安装与构建前提
+
+Cloudflare Pages 在本仓库中应当以 `frontend` 作为根目录执行构建：
+
+- Root directory: `frontend`
+- 依赖安装：Pages 会基于 `bun.lock` 自动安装依赖
+- 推荐环境变量：`BUN_VERSION=1.2.15` 或你们验证过的 Bun 版本
+
+### 2. 用户端 Pages 项目
+
+- Project root directory: `frontend`
+- Build command: `bun run build:user`
+- Build output directory: `packages/user-app/dist`
+
+建议配置以下环境变量：
+
+- `VITE_API_BASE_URL`
+- `VITE_TURNSTILE_SITE_KEY`
+- 可参考 `cloudflare/pages.user.env.example`
+
+### 3. 管理端 Pages 项目
+
+- Project root directory: `frontend`
+- Build command: `bun run build:admin`
+- Build output directory: `packages/admin-app/dist`
+
+建议配置以下环境变量：
+
+- `VITE_API_BASE_URL`
+- `VITE_TURNSTILE_SITE_KEY`
+- 可参考 `cloudflare/pages.admin.env.example`
+
+### 4. SPA 路由支持
+
+两个客户端都使用 Vue Router 的 history 模式，因此部署到 Cloudflare Pages 时需要让非静态资源请求回退到 `index.html`。
+
+项目已经分别在以下位置提供了 `_redirects` 文件：
+
+- `packages/user-app/public/_redirects`
+- `packages/admin-app/public/_redirects`
+
+内容为：
+
+```text
+/* /index.html 200
+```
+
+这样在访问深层路由时，例如 `/login`、`/dashboard`、`/users/list`，Cloudflare Pages 会先返回应用入口，再由前端路由接管。
+
+### 5. 推荐域名拆分
+
+建议为两个 Pages 项目使用不同域名或子域名，例如：
+
+- 用户端：`account.example.com`
+- 管理端：`admin-account.example.com`
+
+当前两个应用都使用根路径路由，并且都包含 `/login` 等公共路径。如果强行放到同一个 Pages 项目中，需要额外改造路由前缀与 Vite `base` 配置。
+
+### 6. 本地验证
+
+在 `frontend` 目录执行：
+
+```bash
+bun run build:user
+bun run build:admin
+```
+
+如果构建成功，并且产物目录分别生成为 `packages/user-app/dist` 和 `packages/admin-app/dist`，就可以直接按上述配置接入 Cloudflare Pages。
+
+### 7. 使用 Wrangler 直传部署
+
+如果你们希望不经过 Pages 控制台、直接通过 CLI 上传静态产物，可以使用仓库内提供的 Wrangler 配置：
+
+- `cloudflare/wrangler.user.toml`
+- `cloudflare/wrangler.admin.toml`
+
+使用前需要先把其中的 `name` 改成真实的 Cloudflare Pages 项目名，并登录 Wrangler：
+
+```bash
+bunx wrangler login
+```
+
+然后在 `frontend` 目录执行：
+
+```bash
+bun run pages:deploy:user
+bun run pages:deploy:admin
+```
+
+这两个脚本会先本地构建，再把对应的 `dist` 目录上传到 Cloudflare Pages。
+
 ## 目录结构说明
 
 每个应用（user-app 和 admin-app）都包含以下目录结构：
