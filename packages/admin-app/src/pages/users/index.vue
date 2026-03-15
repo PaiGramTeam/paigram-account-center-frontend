@@ -20,6 +20,10 @@
       @view="handleViewUser"
       @edit="handleEditUser"
       @create="handleCreateUser"
+      @delete="handleDeleteUser"
+      @batch-delete="handleBatchDelete"
+      @reset-password="handleResetPasswordFor"
+      @toggle-status="handleToggleStatusFor"
     />
 
     <!-- 用户详情抽屉 -->
@@ -38,17 +42,25 @@
                 {{ currentUser.id }}
               </a-descriptions-item>
               <a-descriptions-item label="用户名">
-                {{ currentUser.username }}
+                {{ currentUser.primary_email }}
               </a-descriptions-item>
               <a-descriptions-item label="显示名称">
                 {{ currentUser.display_name }}
               </a-descriptions-item>
               <a-descriptions-item label="邮箱">
                 {{ currentUser.primary_email }}
-                <a-tag v-if="currentUser.email_verified" color="green" size="small" class="ml-2"> 已验证 </a-tag>
+                <a-tag v-if="hasVerifiedPrimaryEmail(currentUser)" color="green" size="small" class="ml-2"> 已验证 </a-tag>
               </a-descriptions-item>
               <a-descriptions-item label="手机号">
                 {{ currentUser.phone || '-' }}
+              </a-descriptions-item>
+              <a-descriptions-item label="用户角色">
+                <a-space wrap>
+                  <a-tag v-for="role in currentUser.roles || []" :key="role">
+                    {{ role }}
+                  </a-tag>
+                  <span v-if="!currentUser.roles?.length">-</span>
+                </a-space>
               </a-descriptions-item>
               <a-descriptions-item label="账号状态">
                 <a-tag :color="getStatusColor(currentUser.status)">
@@ -68,9 +80,10 @@
             <a-descriptions :column="1" :label-style="{ width: '120px' }">
               <a-descriptions-item label="登录方式">
                 <a-space>
-                  <a-tag v-for="method in currentUser.login_methods" :key="method">
+                  <a-tag v-for="method in currentUser.login_methods || []" :key="method">
                     {{ method }}
                   </a-tag>
+                  <span v-if="!currentUser.login_methods?.length">-</span>
                 </a-space>
               </a-descriptions-item>
               <a-descriptions-item label="双因素认证">
@@ -84,6 +97,9 @@
               <a-descriptions-item label="登录设备">
                 {{ currentUser.last_login_device || '-' }}
               </a-descriptions-item>
+              <a-descriptions-item label="活跃会话">
+                {{ currentUser.active_session_count ?? 0 }}
+              </a-descriptions-item>
             </a-descriptions>
 
             <a-divider />
@@ -95,14 +111,16 @@
           </a-tab-pane>
 
           <a-tab-pane key="logs" title="操作日志">
-            <a-timeline>
+            <a-timeline v-if="userLogs.length > 0">
               <a-timeline-item v-for="log in userLogs" :key="log.id">
                 <div class="text-sm">
                   <div class="font-medium">{{ log.action }}</div>
-                  <div class="text-gray-500">{{ formatDate(log.created_at) }} · {{ log.ip }}</div>
+                  <div class="text-gray-500">{{ formatDate(log.created_at) }} · {{ log.ip || '-' }}</div>
+                  <div v-if="log.details" class="text-xs text-gray-500">{{ log.details }}</div>
                 </div>
               </a-timeline-item>
             </a-timeline>
+            <a-empty v-else description="暂无操作日志" />
           </a-tab-pane>
         </a-tabs>
       </div>
@@ -131,9 +149,9 @@
 
         <a-form-item field="roles" label="用户角色">
           <a-select v-model="editForm.roles" placeholder="请选择用户角色" multiple allow-clear>
-            <a-option value="user">普通用户</a-option>
-            <a-option value="admin">管理员</a-option>
-            <a-option value="super_admin">超级管理员</a-option>
+            <a-option v-for="role in roleOptions" :key="role.name" :value="role.name">
+              {{ role.display_name }}
+            </a-option>
           </a-select>
         </a-form-item>
 
@@ -151,12 +169,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import type { FormInstance } from '@arco-design/web-vue'
 import { UserTable, UserCard, PageHeader, useUserStore } from '@paigram/shared-components'
-import { userApi } from '@/api'
-import type { UserDetail, UserListItem } from '@paigram/shared-components'
+import { roleApi, userApi } from '@/api'
+import type { RoleListItem, UserAuditLogItem, UserDetail, UserListItem, UserStatus } from '@paigram/shared-components'
 
 const userStore = useUserStore()
 
@@ -173,11 +191,9 @@ const editFormRef = ref<FormInstance>()
 // 用户详情
 const detailVisible = ref(false)
 const currentUser = ref<UserDetail | null>(null)
-const userLogs = ref([
-  { id: 1, action: '登录系统', created_at: new Date(), ip: '192.168.1.1' },
-  { id: 2, action: '修改密码', created_at: new Date(Date.now() - 86400000), ip: '192.168.1.1' },
-  { id: 3, action: '更新个人资料', created_at: new Date(Date.now() - 172800000), ip: '192.168.1.1' },
-])
+const userLogs = ref<UserAuditLogItem[]>([])
+const roleOptions = ref<RoleListItem[]>([])
+const editingUserId = ref<number | null>(null)
 
 // 用户编辑
 const editVisible = ref(false)
@@ -187,7 +203,8 @@ const editForm = reactive({
   email: '',
   password: '',
   roles: [] as string[],
-  status: 'active',
+  status: 'active' as UserStatus,
+  locale: 'en_US',
 })
 
 // 表单验证规则
@@ -232,59 +249,79 @@ const formatDate = (date?: string | Date): string => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
-// 为演示创建模拟的 UserDetail 数据
-const createMockUserDetail = (user: UserListItem): UserDetail => {
-  return {
-    id: user.id,
-    display_name: user.display_name,
-    primary_email: user.primary_email,
-    avatar_url: user.avatar_url,
-    status: user.status,
-    created_at: user.created_at,
-    updated_at: user.created_at, // 假设更新时间和创建时间相同
-    last_login_at: user.last_login_at,
-    bio: undefined,
-    locale: undefined,
-    roles: [],
-    // 额外的详情字段
-    username: user.display_name.toLowerCase().replace(/\s+/g, '_'),
-    nickname: user.display_name,
-    email: user.primary_email,
-    email_verified: true,
-    phone: '+86 138xxxx1234',
-    permissions: ['user:read', 'user:write'],
-    last_login_ip: '192.168.1.100',
-    last_login_device: 'Chrome 120.0 / Windows',
-    login_methods: [user.primary_login_type || 'email'],
-    two_factor_enabled: false,
+const loadRoleOptions = async () => {
+  try {
+    const response = await roleApi.getList({ page: 1, page_size: 100 })
+    roleOptions.value = response.data
+  } catch (error) {
+    console.error('加载角色失败:', error)
+    Message.error('加载角色列表失败')
   }
 }
 
+const loadUserDetail = async (userId: number | string): Promise<UserDetail> => {
+  const [{ data: detail }, auditResponse, securityResponse] = await Promise.all([
+    userApi.getDetail(userId),
+    userApi.getAuditLogs(userId, { page: 1, page_size: 10 }),
+    userApi.getSecuritySummary(userId),
+  ])
+
+  userLogs.value = auditResponse.data.data.data
+
+  return {
+    ...detail,
+    login_methods: detail.login_methods || (detail.primary_login_type ? [detail.primary_login_type] : []),
+    two_factor_enabled: securityResponse.data.two_factor_enabled,
+    active_session_count: securityResponse.data.active_session_count,
+    last_login_ip: securityResponse.data.last_login_ip,
+    last_login_device: securityResponse.data.last_login_device,
+  }
+}
+
+const hasVerifiedPrimaryEmail = (user: UserDetail) => {
+  return !!user.emails?.find((email) => email.is_primary && email.verified_at)
+}
+
 // 查看用户详情
-const handleViewUser = (user: UserListItem) => {
-  currentUser.value = createMockUserDetail(user)
-  detailVisible.value = true
+const handleViewUser = async (user: UserListItem) => {
+  try {
+    currentUser.value = await loadUserDetail(user.id)
+    detailVisible.value = true
+  } catch (error) {
+    console.error('加载用户详情失败:', error)
+    Message.error('加载用户详情失败')
+  }
 }
 
 // 编辑用户
-const handleEditUser = (user: UserListItem) => {
-  const userDetail = createMockUserDetail(user)
-  editMode.value = 'edit'
-  editForm.display_name = userDetail.display_name
-  editForm.email = userDetail.primary_email
-  editForm.roles = userDetail.roles || []
-  editForm.status = userDetail.status
-  editVisible.value = true
+const handleEditUser = async (user: UserListItem) => {
+  try {
+    const userDetail = await loadUserDetail(user.id)
+    currentUser.value = userDetail
+    editingUserId.value = user.id
+    editMode.value = 'edit'
+    editForm.display_name = userDetail.display_name
+    editForm.email = userDetail.primary_email
+    editForm.roles = [...(userDetail.roles || [])]
+    editForm.status = userDetail.status
+    editForm.locale = userDetail.locale || 'en_US'
+    editVisible.value = true
+  } catch (error) {
+    console.error('加载编辑数据失败:', error)
+    Message.error('加载用户数据失败')
+  }
 }
 
 // 创建用户
 const handleCreateUser = () => {
+  editingUserId.value = null
   editMode.value = 'create'
   editForm.display_name = ''
   editForm.email = ''
   editForm.password = ''
   editForm.roles = []
   editForm.status = 'active'
+  editForm.locale = 'en_US'
   editVisible.value = true
 }
 
@@ -302,17 +339,22 @@ const handleSaveUser = async () => {
         password: editForm.password,
         roles: editForm.roles,
         status: editForm.status as 'active' | 'pending' | 'suspended' | 'deleted',
+        locale: editForm.locale,
       })
       Message.success('创建成功')
     } else {
       // 更新用户
-      if (currentUser.value) {
-        await userApi.update(currentUser.value.id, {
+      if (editingUserId.value) {
+        await userApi.update(editingUserId.value, {
           display_name: editForm.display_name,
           roles: editForm.roles,
           status: editForm.status as 'active' | 'pending' | 'suspended' | 'deleted',
+          locale: editForm.locale,
         })
         Message.success('更新成功')
+        if (currentUser.value?.id === editingUserId.value) {
+          currentUser.value = await loadUserDetail(editingUserId.value)
+        }
       }
     }
     editVisible.value = false
@@ -325,11 +367,11 @@ const handleSaveUser = async () => {
 }
 
 // 重置密码
-const handleResetPassword = async () => {
-  if (!currentUser.value) return
+const handleResetPasswordFor = async (user: UserListItem | UserDetail) => {
+  if (!user?.id) return
 
   try {
-    await userApi.resetPassword(currentUser.value.id)
+    await userApi.resetPassword(user.id)
     Message.success('密码重置邮件已发送')
   } catch (error) {
     console.error('重置密码失败:', error)
@@ -338,10 +380,73 @@ const handleResetPassword = async () => {
   }
 }
 
-// 强制登出
-const handleForceLogout = () => {
-  Message.info('强制登出功能开发中')
-  // TODO: 实现强制登出逻辑
+const handleResetPassword = async () => {
+  if (!currentUser.value) return
+  await handleResetPasswordFor(currentUser.value)
 }
+
+// 强制登出
+const handleForceLogout = async () => {
+  if (!currentUser.value) return
+
+  try {
+    const response = await userApi.getSessions(currentUser.value.id, { page: 1, page_size: 100 })
+    const sessions = response.data.data.data.filter((session) => !session.is_current)
+
+    await Promise.all(sessions.map((session) => userApi.revokeSession(currentUser.value!.id, session.id)))
+
+    currentUser.value = await loadUserDetail(currentUser.value.id)
+    Message.success(sessions.length > 0 ? `已强制登出 ${sessions.length} 个会话` : '没有可强制登出的其他会话')
+  } catch (error) {
+    console.error('强制登出失败:', error)
+    Message.error('强制登出失败')
+  }
+}
+
+const handleDeleteUser = async (user: UserListItem) => {
+  try {
+    await userApi.delete(user.id)
+    Message.success('删除成功')
+    if (currentUser.value?.id === user.id) {
+      detailVisible.value = false
+      currentUser.value = null
+      userLogs.value = []
+    }
+    userTableRef.value?.refresh()
+  } catch (error) {
+    console.error('删除失败:', error)
+    Message.error(error instanceof Error ? error.message : '删除失败')
+  }
+}
+
+const handleBatchDelete = async (users: UserListItem[]) => {
+  try {
+    await Promise.all(users.map((user) => userApi.delete(user.id)))
+    Message.success(`已删除 ${users.length} 个用户`)
+    userTableRef.value?.refresh()
+  } catch (error) {
+    console.error('批量删除失败:', error)
+    Message.error(error instanceof Error ? error.message : '批量删除失败')
+  }
+}
+
+const handleToggleStatusFor = async (user: UserListItem) => {
+  const nextStatus: UserStatus = user.status === 'active' ? 'suspended' : 'active'
+  try {
+    await userApi.updateStatus(user.id, nextStatus)
+    Message.success(nextStatus === 'active' ? '已激活用户' : '已停用用户')
+    if (currentUser.value?.id === user.id) {
+      currentUser.value = await loadUserDetail(user.id)
+    }
+    userTableRef.value?.refresh()
+  } catch (error) {
+    console.error('更新状态失败:', error)
+    Message.error(error instanceof Error ? error.message : '更新状态失败')
+  }
+}
+
+onMounted(() => {
+  loadRoleOptions()
+})
 </script>
 <style scoped></style>

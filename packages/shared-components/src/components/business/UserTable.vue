@@ -204,6 +204,8 @@ const emit = defineEmits<{
   create: []
   delete: [user: UserListItem]
   'batch-delete': [users: UserListItem[]]
+  'reset-password': [user: UserListItem]
+  'toggle-status': [user: UserListItem]
   refresh: []
 }>()
 
@@ -307,9 +309,9 @@ const tableColumns = computed<TableColumnData[]>(() => {
 const getStatusColor = (status: string): string => {
   const colorMap: Record<string, string> = {
     active: 'green',
-      pending: 'blue',
-      suspended: 'red',
-      deleted: 'gray',
+    pending: 'blue',
+    suspended: 'red',
+    deleted: 'gray',
   }
   return colorMap[status] || 'gray'
 }
@@ -318,9 +320,9 @@ const getStatusColor = (status: string): string => {
 const getStatusText = (status: string): string => {
   const textMap: Record<string, string> = {
     active: '正常',
-      pending: '待处理',
-      suspended: '已停用',
-      deleted: '已删除',
+    pending: '待处理',
+    suspended: '已停用',
+    deleted: '已删除',
   }
   return textMap[status] || '未知'
 }
@@ -410,8 +412,6 @@ const handleDelete = (record: UserListItem) => {
     okButtonProps: { status: 'danger' },
     onOk: () => {
       emit('delete', record)
-      Message.success('删除成功')
-      fetchUsers()
     },
   })
 }
@@ -428,9 +428,6 @@ const handleBatchDelete = () => {
     okButtonProps: { status: 'danger' },
     onOk: () => {
       emit('batch-delete', selectedUsers)
-      Message.success('批量删除成功')
-      selectedKeys.value = []
-      fetchUsers()
     },
   })
 }
@@ -443,7 +440,7 @@ const handleResetPassword = (record: UserListItem) => {
     okText: '确定',
     cancelText: '取消',
     onOk: () => {
-      Message.success('密码重置邮件已发送')
+      emit('reset-password', record)
     },
   })
 }
@@ -457,8 +454,7 @@ const handleToggleStatus = (record: UserListItem) => {
     okText: '确定',
     cancelText: '取消',
     onOk: () => {
-      Message.success(`${action}成功`)
-      fetchUsers()
+      emit('toggle-status', record)
     },
   })
 }

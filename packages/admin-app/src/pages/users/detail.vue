@@ -77,6 +77,12 @@
                 <a-descriptions-item label="最后登录">
                   {{ formatDate(userDetail.last_login_at) }}
                 </a-descriptions-item>
+                <a-descriptions-item label="用户角色">
+                  <a-space wrap>
+                    <a-tag v-for="role in userDetail.roles || []" :key="role">{{ role }}</a-tag>
+                    <span v-if="!userDetail.roles?.length">-</span>
+                  </a-space>
+                </a-descriptions-item>
               </a-descriptions>
             </a-card>
           </a-col>
@@ -109,6 +115,65 @@
         </a-row>
 
         <!-- 账号状态和操作 -->
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-card title="安全概览">
+              <a-descriptions :column="1" bordered>
+                <a-descriptions-item label="双因素认证">
+                  <a-tag :color="userDetail.two_factor_enabled ? 'green' : 'gray'">
+                    {{ userDetail.two_factor_enabled ? '已启用' : '未启用' }}
+                  </a-tag>
+                </a-descriptions-item>
+                <a-descriptions-item label="活跃会话数">
+                  {{ userDetail.active_session_count ?? 0 }}
+                </a-descriptions-item>
+                <a-descriptions-item label="最近登录 IP">
+                  {{ securitySummary?.last_login_ip || '-' }}
+                </a-descriptions-item>
+                <a-descriptions-item label="最近登录设备">
+                  {{ securitySummary?.last_login_device || '-' }}
+                </a-descriptions-item>
+                <a-descriptions-item label="近 30 天失败登录">
+                  {{ securitySummary?.failed_logins_last_30_days ?? 0 }}
+                </a-descriptions-item>
+              </a-descriptions>
+            </a-card>
+          </a-col>
+
+          <a-col :span="12">
+            <a-card title="有效权限">
+              <a-space v-if="userDetail.permissions?.length" wrap>
+                <a-tag v-for="permission in userDetail.permissions" :key="permission">
+                  {{ permission }}
+                </a-tag>
+              </a-space>
+              <a-empty v-else description="暂无权限数据" />
+            </a-card>
+          </a-col>
+        </a-row>
+
+        <a-card title="活跃会话">
+          <a-list v-if="sessions.length > 0" :data="sessions" :bordered="false">
+            <template #item="{ item }">
+              <a-list-item>
+                <div class="flex w-full items-center justify-between gap-4">
+                  <div>
+                    <div class="font-medium">{{ item.device_name || item.device_type || '未知设备' }}</div>
+                    <div class="text-sm text-gray-500">
+                      {{ item.ip || '-' }} · {{ item.location || '未知位置' }} · {{ formatDate(item.last_active_at || item.created_at) }}
+                    </div>
+                  </div>
+                  <a-space>
+                    <a-tag v-if="item.is_current" color="green">当前会话</a-tag>
+                    <a-button v-else type="text" status="danger" @click="handleRevokeSession(item.id)">踢下线</a-button>
+                  </a-space>
+                </div>
+              </a-list-item>
+            </template>
+          </a-list>
+          <a-empty v-else description="暂无活跃会话" />
+        </a-card>
+
         <a-card title="账号管理">
           <a-space size="large">
             <a-button type="primary" @click="handleResetPassword">重置密码</a-button>
@@ -164,12 +229,14 @@ import { Message, Modal } from '@arco-design/web-vue'
 import { IconUser, IconEmail, IconInfoCircle } from '@arco-design/web-vue/es/icon'
 import type { FormInstance } from '@arco-design/web-vue'
 import { userApi } from '@/api'
-import type { UserDetail, UpdateUserRequest } from '@paigram/shared-components'
+import type { UpdateUserRequest, UserDetail, UserSecuritySummary, UserSessionItem } from '@paigram/shared-components'
 
 const route = useRoute()
 const router = useRouter()
 const loading = ref(false)
 const userDetail = ref<UserDetail | null>(null)
+const securitySummary = ref<UserSecuritySummary | null>(null)
+const sessions = ref<UserSessionItem[]>([])
 const editVisible = ref(false)
 const editFormRef = ref<FormInstance>()
 
@@ -231,8 +298,19 @@ const loadUserDetail = async (): Promise<void> => {
 
   loading.value = true
   try {
-    const response = await userApi.getDetail(userId as string)
-    userDetail.value = response.data
+    const [{ data: detail }, securityResponse, sessionsResponse] = await Promise.all([
+      userApi.getDetail(userId as string),
+      userApi.getSecuritySummary(userId as string),
+      userApi.getSessions(userId as string, { page: 1, page_size: 100 }),
+    ])
+
+    userDetail.value = {
+      ...detail,
+      two_factor_enabled: securityResponse.data.two_factor_enabled,
+      active_session_count: securityResponse.data.active_session_count,
+    }
+    securitySummary.value = securityResponse.data
+    sessions.value = sessionsResponse.data.data.data
   } catch (error) {
     console.error('加载用户详情失败:', error)
     Message.error('加载用户详情失败')
@@ -243,7 +321,7 @@ const loadUserDetail = async (): Promise<void> => {
 
 // 返回列表
 const handleBack = (): void => {
-  router.push('/users')
+  router.push('/users/list')
 }
 
 // 打开编辑弹窗
@@ -293,7 +371,7 @@ const handleDelete = (): void => {
       try {
         await userApi.delete(userId as string)
         Message.success('删除成功')
-        router.push('/users')
+        router.push('/users/list')
       } catch (error) {
         console.error('删除失败:', error)
         const errorMessage = error instanceof Error ? error.message : '删除失败，请稍后重试'
@@ -352,6 +430,28 @@ const handleToggleStatus = (): void => {
         console.error(`${action}失败:`, error)
         const errorMessage = error instanceof Error ? error.message : `${action}失败`
         Message.error(errorMessage)
+      }
+    },
+  })
+}
+
+const handleRevokeSession = (sessionId: number): void => {
+  if (!userDetail.value) return
+
+  Modal.confirm({
+    title: '踢出会话',
+    content: `确定要踢出用户 "${userDetail.value.display_name}" 的这个会话吗？`,
+    okText: '确定',
+    cancelText: '取消',
+    okButtonProps: { status: 'danger' },
+    onOk: async () => {
+      try {
+        await userApi.revokeSession(userDetail.value!.id, sessionId)
+        Message.success('已踢出该会话')
+        await loadUserDetail()
+      } catch (error) {
+        console.error('踢出会话失败:', error)
+        Message.error(error instanceof Error ? error.message : '踢出会话失败')
       }
     },
   })

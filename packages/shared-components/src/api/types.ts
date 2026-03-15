@@ -66,6 +66,7 @@ export interface UserDetail extends UserInfo {
   last_login_device?: string
   login_methods?: LoginType[]
   two_factor_enabled?: boolean
+  active_session_count?: number
   emails?: EmailData[]
   primary_login_type?: LoginType
 }
@@ -77,6 +78,7 @@ export interface UserListItem {
   primary_email: string
   avatar_url?: string
   status: UserStatus
+  roles?: string[]
   primary_login_type?: LoginType
   last_login_at?: string
   created_at: string
@@ -139,6 +141,41 @@ export interface UpdateUserRequest {
 // 更新用户响应
 export interface UpdateUserResponse {
   data: UserDetail
+}
+
+export interface UserSessionItem {
+  id: number
+  device_id?: string
+  device_name?: string
+  device_type?: string
+  ip?: string
+  location?: string
+  created_at: string
+  last_active_at?: string
+  access_expiry: string
+  refresh_expiry: string
+  is_current: boolean
+}
+
+export interface UserAuditLogItem {
+  id: number
+  user_id: number
+  action: string
+  details?: string
+  ip?: string
+  created_at: string
+}
+
+export interface UserSecuritySummary {
+  user_id: number
+  two_factor_enabled: boolean
+  active_session_count: number
+  device_count: number
+  failed_logins_last_30_days: number
+  last_login_at?: string
+  last_login_ip?: string
+  last_login_device?: string
+  last_login_location?: string
 }
 
 // 刷新 Token 请求

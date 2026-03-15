@@ -16,7 +16,10 @@ import type {
   UpdateUserRequest,
   UpdateUserResponse,
   UserDetail,
-  PaginationMeta,
+  PaginatedResponse,
+  UserAuditLogItem,
+  UserSecuritySummary,
+  UserSessionItem,
 } from '../types'
 
 export function createUserApi(request: ReturnType<typeof createRequest>) {
@@ -55,6 +58,26 @@ export function createUserApi(request: ReturnType<typeof createRequest>) {
     // 重置用户密码
     async resetPassword(id: number | string): Promise<{ data: { message: string } }> {
       return request.post(`/users/${id}/reset-password`)
+    },
+
+    // 获取用户审计日志
+    async getAuditLogs(id: number | string, params?: { page?: number; page_size?: number; action_type?: string }) {
+      return request.get<PaginatedResponse<UserAuditLogItem>>(`/users/${id}/audit-logs`, { params })
+    },
+
+    // 获取用户会话列表
+    async getSessions(id: number | string, params?: { page?: number; page_size?: number }) {
+      return request.get<PaginatedResponse<UserSessionItem>>(`/users/${id}/sessions`, { params })
+    },
+
+    // 吊销用户会话
+    async revokeSession(id: number | string, sessionId: number | string): Promise<{ data: { message: string } }> {
+      return request.delete(`/users/${id}/sessions/${sessionId}`)
+    },
+
+    // 获取用户安全摘要
+    async getSecuritySummary(id: number | string): Promise<{ data: UserSecuritySummary }> {
+      return request.get(`/users/${id}/security-summary`)
     },
   }
 }
