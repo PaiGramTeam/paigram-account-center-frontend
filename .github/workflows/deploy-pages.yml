@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.deploy_ref }}
 
@@ -134,7 +134,7 @@ jobs:
     environment: cloudflare-pages-${{ needs.prepare.outputs.deploy_mode }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.deploy_ref }}
 
@@ -172,7 +172,7 @@ jobs:
     environment: cloudflare-pages-${{ needs.prepare.outputs.deploy_mode }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.prepare.outputs.deploy_ref }}
 
