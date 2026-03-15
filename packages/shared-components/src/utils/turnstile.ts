@@ -1,14 +1,34 @@
+export interface TurnstileRenderOptions {
+  sitekey: string
+  action?: string
+  theme?: 'light' | 'dark' | 'auto'
+  size?: 'normal' | 'compact' | 'flexible'
+  callback?: (token: string) => void
+  'expired-callback'?: () => void
+  'error-callback'?: (errorCode?: string) => void
+}
+
+export interface TurnstileAPI {
+  render: (container: string | HTMLElement, options: TurnstileRenderOptions) => string
+  reset: (widgetId: string) => void
+  remove: (widgetId: string) => void
+}
+
 const TURNSTILE_SCRIPT_ID = 'cf-turnstile-script'
 const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
 
 let turnstileScriptPromise: Promise<void> | null = null
+
+export function getTurnstile(): TurnstileAPI | undefined {
+  return (window as Window & { turnstile?: TurnstileAPI }).turnstile
+}
 
 export function loadTurnstileScript(): Promise<void> {
   if (typeof window === 'undefined') {
     return Promise.reject(new Error('Turnstile can only be loaded in the browser'))
   }
 
-  if (window.turnstile) {
+  if (getTurnstile()) {
     return Promise.resolve()
   }
 

@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { loadTurnstileScript } from '../../utils/turnstile'
+import { getTurnstile, loadTurnstileScript } from '../../utils/turnstile'
 
 interface Props {
   siteKey: string
@@ -42,14 +42,16 @@ async function renderWidget() {
     await loadTurnstileScript()
     await nextTick()
 
-    if (!containerRef.value || !window.turnstile) {
+    const turnstile = getTurnstile()
+
+    if (!containerRef.value || !turnstile) {
       throw new Error('Turnstile is unavailable')
     }
 
     clearWidget()
     errorMessage.value = ''
 
-    widgetId.value = window.turnstile.render(containerRef.value, {
+    widgetId.value = turnstile.render(containerRef.value, {
       sitekey: props.siteKey,
       action: props.action,
       theme: props.theme,
@@ -78,9 +80,11 @@ function clearWidget() {
     containerRef.value.innerHTML = ''
   }
 
-  if (widgetId.value && window.turnstile) {
+  const turnstile = getTurnstile()
+
+  if (widgetId.value && turnstile) {
     try {
-      window.turnstile.remove(widgetId.value)
+      turnstile.remove(widgetId.value)
     } catch {
       // ignore remove errors from stale widgets
     }
@@ -90,8 +94,10 @@ function clearWidget() {
 }
 
 function resetWidget() {
-  if (widgetId.value && window.turnstile) {
-    window.turnstile.reset(widgetId.value)
+  const turnstile = getTurnstile()
+
+  if (widgetId.value && turnstile) {
+    turnstile.reset(widgetId.value)
   } else {
     void renderWidget()
   }
