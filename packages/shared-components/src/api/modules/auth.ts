@@ -1,6 +1,7 @@
 import type { createRequest } from '../request'
 import type {
   LoginEmailRequest,
+  LoginEmailResponse,
   LoginResponse,
   RefreshTokenRequest,
   LogoutRequest,
@@ -17,7 +18,7 @@ import type {
 export function createAuthApi(request: ReturnType<typeof createRequest>) {
   return {
     // 邮箱密码登录
-    async login(data: LoginEmailRequest): Promise<LoginResponse> {
+    async login(data: LoginEmailRequest): Promise<LoginEmailResponse> {
       return request.post('/auth/login', data)
     },
 

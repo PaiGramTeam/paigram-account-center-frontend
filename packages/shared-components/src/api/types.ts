@@ -24,7 +24,14 @@ export interface ApiError {
 export interface LoginEmailRequest {
   email: string
   password: string
+  totp_code?: string
+  trust_device?: boolean
   captcha_token?: string
+}
+
+export interface LoginChallengeResponseData {
+  requires_totp: true
+  message: string
 }
 
 export interface LoginResponseData {
@@ -35,7 +42,10 @@ export interface LoginResponseData {
   user_id: number
 }
 
+export type LoginEmailResponseData = LoginResponseData | LoginChallengeResponseData
 export type LoginResponse = ApiResponse<LoginResponseData>
+export type LoginChallengeResponse = ApiResponse<LoginChallengeResponseData>
+export type LoginEmailResponse = ApiResponse<LoginEmailResponseData>
 
 // 用户信息相关类型
 export interface UserInfo {

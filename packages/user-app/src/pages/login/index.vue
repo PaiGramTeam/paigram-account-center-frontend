@@ -23,10 +23,21 @@
             </p>
           </div>
 
+          <div v-if="showTwoFactorStep" class="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <p class="font-medium text-blue-900">需要二级认证</p>
+            <p class="mt-1">{{ twoFactorMessage || '请输入身份验证器中的 6 位验证码，或使用备用恢复码继续登录。' }}</p>
+          </div>
+
           <!-- 登录表单 -->
           <a-form :model="loginForm" :rules="rules" layout="vertical" @submit="handleSubmit">
             <a-form-item field="email" label="邮箱地址">
-              <a-input v-model="loginForm.email" size="large" placeholder="请输入邮箱地址" allow-clear>
+              <a-input
+                v-model="loginForm.email"
+                size="large"
+                placeholder="请输入邮箱地址"
+                allow-clear
+                :disabled="showTwoFactorStep"
+              >
                 <template #prefix>
                   <icon-email />
                 </template>
@@ -34,16 +45,43 @@
             </a-form-item>
 
             <a-form-item field="password" label="密码">
-              <a-input-password v-model="loginForm.password" size="large" placeholder="请输入密码" allow-clear>
+              <a-input-password
+                v-model="loginForm.password"
+                size="large"
+                placeholder="请输入密码"
+                allow-clear
+                :disabled="showTwoFactorStep"
+              >
                 <template #prefix>
                   <icon-lock />
                 </template>
               </a-input-password>
             </a-form-item>
 
+            <a-form-item v-if="showTwoFactorStep" field="totp_code" label="验证码或备用恢复码">
+              <a-input
+                v-model="loginForm.totp_code"
+                size="large"
+                placeholder="请输入 2FA 验证码"
+                allow-clear
+                maxlength="8"
+              >
+                <template #prefix>
+                  <icon-safe />
+                </template>
+              </a-input>
+            </a-form-item>
+
+            <div v-if="showTwoFactorStep" class="mb-6 rounded-xl bg-gray-50 px-4 py-3 text-xs leading-6 text-gray-600">
+              你可以输入身份验证器中的动态验证码，也可以输入一次性备用恢复码。
+            </div>
+
             <div class="mb-6 flex items-center justify-between">
-              <a-checkbox v-model="rememberMe">记住我</a-checkbox>
-              <a-link @click="handleForgotPassword" class="text-sm"> 忘记密码？ </a-link>
+              <a-checkbox v-if="!showTwoFactorStep" v-model="rememberMe">记住我</a-checkbox>
+              <a-checkbox v-else v-model="loginForm.trust_device">信任此设备 30 天</a-checkbox>
+              <a-link @click="showTwoFactorStep ? resetTwoFactorStep() : handleForgotPassword()" class="text-sm">
+                {{ showTwoFactorStep ? '返回上一步' : '忘记密码？' }}
+              </a-link>
             </div>
 
             <a-form-item v-if="showCaptcha" label="安全验证">
@@ -57,16 +95,18 @@
               />
             </a-form-item>
 
-            <a-button type="primary" size="large" long html-type="submit" :loading="loading"> 登录 </a-button>
+            <a-button type="primary" size="large" long html-type="submit" :loading="loading">
+              {{ showTwoFactorStep ? '验证并登录' : '登录' }}
+            </a-button>
           </a-form>
 
           <!-- 分割线 -->
-          <a-divider class="!my-8">
+          <a-divider v-if="!showTwoFactorStep" class="!my-8">
             <span class="text-sm text-gray-500">或使用其他方式登录</span>
           </a-divider>
 
           <!-- 第三方登录 -->
-          <div class="grid grid-cols-2 gap-4">
+          <div v-if="!showTwoFactorStep" class="grid grid-cols-2 gap-4">
             <a-button
               v-for="provider in oauthProviders"
               :key="provider.name"
@@ -82,7 +122,7 @@
           </div>
 
           <!-- Telegram 登录 -->
-          <div class="mt-4">
+          <div v-if="!showTwoFactorStep" class="mt-4">
             <a-button size="large" long @click="handleTelegramLogin">
               <template #icon>
                 <icon-send />
@@ -100,7 +140,7 @@
 import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
+import { IconGithub, IconGoogle, IconEmail, IconLock, IconSafe, IconSend } from '@arco-design/web-vue/es/icon'
 import { authApi } from '@/api'
 import { TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
@@ -114,6 +154,8 @@ const authStore = useAuthStore()
 const loginForm = reactive<LoginEmailRequest>({
   email: '',
   password: '',
+  totp_code: '',
+  trust_device: false,
   captcha_token: undefined,
 })
 
@@ -121,6 +163,8 @@ const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 const captchaToken = ref('')
 const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || ''
 const showCaptcha = ref(false)
+const showTwoFactorStep = ref(false)
+const twoFactorMessage = ref('')
 
 // 记住我
 const rememberMe = ref(false)
@@ -138,6 +182,7 @@ const rules = {
     { required: true, message: '请输入密码' },
     { minLength: 6, message: '密码长度不能少于6位' },
   ],
+  totp_code: [{ minLength: 6, message: '验证码长度不能少于6位' }],
 }
 
 // OAuth 提供商
@@ -170,8 +215,23 @@ const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> =
   try {
     values.captcha_token = showCaptcha.value ? captchaToken.value : undefined
 
-    // 使用 authStore 的登录方法，它会自动处理 token 保存和用户信息获取
-    await authStore.loginWithEmail(values)
+    values.totp_code = normalizeTOTPCode(loginForm.totp_code)
+    values.trust_device = showTwoFactorStep.value ? !!loginForm.trust_device : false
+
+    if (showTwoFactorStep.value && !values.totp_code) {
+      Message.warning('请输入 2FA 验证码或备用恢复码')
+      return
+    }
+
+    const result = await authStore.loginWithEmail(values)
+
+    if (result.status === 'requires_totp') {
+      showTwoFactorStep.value = true
+      twoFactorMessage.value = result.message || ''
+      loginForm.totp_code = ''
+      loginForm.trust_device = false
+      return
+    }
 
     // 跳转到控制台或之前的页面
     const redirect = route.query.redirect as string
@@ -187,6 +247,13 @@ const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> =
   } finally {
     loading.value = false
   }
+}
+
+const resetTwoFactorStep = (): void => {
+  showTwoFactorStep.value = false
+  twoFactorMessage.value = ''
+  loginForm.totp_code = ''
+  loginForm.trust_device = false
 }
 
 const handleCaptchaToken = (token: string): void => {
@@ -208,6 +275,11 @@ const handleCaptchaError = (message: string): void => {
 function isCaptchaError(error: unknown): boolean {
   const errorCode = (error as { code?: string })?.code
   return errorCode === 'CAPTCHA_REQUIRED' || errorCode === 'CAPTCHA_FAILED'
+}
+
+function normalizeTOTPCode(code: string | undefined): string | undefined {
+  const normalized = code?.trim().replace(/\s+/g, '')
+  return normalized || undefined
 }
 
 // OAuth 登录
