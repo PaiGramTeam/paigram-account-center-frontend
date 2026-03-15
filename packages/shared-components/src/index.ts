@@ -14,6 +14,7 @@ export { default as BasicLayout } from './components/layout/BasicLayout.vue'
 export { default as UserTable } from './components/business/UserTable.vue'
 export { default as UserCard } from './components/business/UserCard.vue'
 export { default as PageHeader } from './components/business/PageHeader.vue'
+export { default as TurnstileWidget } from './components/business/TurnstileWidget.vue'
 
 // Stores (保留原有导出用于向后兼容)
 export { useUserStore } from './stores/user'

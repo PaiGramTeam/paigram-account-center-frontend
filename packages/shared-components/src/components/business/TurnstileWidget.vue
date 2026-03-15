@@ -7,7 +7,7 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { loadTurnstileScript } from '@/lib/turnstile'
+import { loadTurnstileScript } from '../../utils/turnstile'
 
 interface Props {
   siteKey: string
@@ -59,16 +59,16 @@ async function renderWidget() {
         emit('token', token)
       },
       'expired-callback': () => {
-        errorMessage.value = '验证已过期，请重新完成安全校验'
+        errorMessage.value = 'Verification expired, please complete the check again'
         emit('expired')
       },
       'error-callback': () => {
-        errorMessage.value = '安全校验加载失败，请刷新后重试'
+        errorMessage.value = 'Security check failed to load, please refresh and try again'
         emit('error', errorMessage.value)
       },
     })
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : '安全校验加载失败'
+    errorMessage.value = error instanceof Error ? error.message : 'Security check failed to load'
     emit('error', errorMessage.value)
   }
 }

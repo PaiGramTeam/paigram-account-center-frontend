@@ -67,6 +67,5 @@ declare module 'vue' {
     ATypographyText: typeof import('@arco-design/web-vue')['TypographyText']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
-    TurnstileWidget: typeof import('./../components/TurnstileWidget.vue')['default']
   }
 }

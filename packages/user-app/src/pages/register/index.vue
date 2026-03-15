@@ -74,7 +74,7 @@ import { Message } from '@arco-design/web-vue'
 import { IconCheckCircleFill } from '@arco-design/web-vue/es/icon'
 import type { FormInstance } from '@arco-design/web-vue'
 import { authApi } from '@/api'
-import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import { TurnstileWidget } from '@paigram/shared-components'
 import type { RegisterEmailRequest } from '@paigram/shared-components'
 
 const router = useRouter()

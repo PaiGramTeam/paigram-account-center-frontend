@@ -102,7 +102,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
 import { authApi } from '@/api'
-import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import { TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 

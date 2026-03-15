@@ -29,7 +29,7 @@
 import { nextTick, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import TurnstileWidget from '@/components/TurnstileWidget.vue'
+import { TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 
