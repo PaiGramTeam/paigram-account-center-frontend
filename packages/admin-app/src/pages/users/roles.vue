@@ -46,7 +46,13 @@
 
         <!-- 用户数量列 -->
         <template #user_count="{ record }">
-          <a-tag color="green">{{ record.user_count }} 个用户</a-tag>
+          <a-tag color="green">{{ record.user_count ?? '-' }} 个用户</a-tag>
+        </template>
+
+        <template #system="{ record }">
+          <a-tag :color="record.is_system ? 'gold' : 'gray'">
+            {{ record.is_system ? '系统角色' : '自定义角色' }}
+          </a-tag>
         </template>
 
         <!-- 创建时间列 -->
@@ -131,6 +137,12 @@ const columns = [
     title: '用户数量',
     dataIndex: 'user_count',
     slotName: 'user_count',
+    width: 120,
+  },
+  {
+    title: '类型',
+    dataIndex: 'is_system',
+    slotName: 'system',
     width: 120,
   },
   {
@@ -242,6 +254,11 @@ const handleEdit = (role: RoleListItem): void => {
 
 // 删除角色
 const handleDelete = (role: RoleListItem): void => {
+  if (role.is_system) {
+    Message.warning('系统角色不允许删除')
+    return
+  }
+
   Modal.confirm({
     title: '删除角色',
     content: `确定要删除角色 "${role.display_name}" 吗？此操作不可恢复。`,

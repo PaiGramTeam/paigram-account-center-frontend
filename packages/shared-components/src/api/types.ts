@@ -429,7 +429,8 @@ export interface RoleListItem {
   display_name: string
   description: string
   permission_count: number
-  user_count: number
+  user_count?: number
+  is_system?: boolean
   created_at: string
 }
 
@@ -440,7 +441,9 @@ export interface RoleDetail {
   display_name: string
   description: string
   permission_count: number
-  user_count: number
+  user_count?: number
+  is_system?: boolean
+  permissions?: PermissionListItem[]
   created_at: string
   updated_at: string
 }
@@ -497,9 +500,13 @@ export interface RoleDetailResponse {
 export interface PermissionListItem {
   id: number
   name: string // 权限唯一标识，如 "user:read"
-  display_name: string // 显示名称，如 "查看用户"
+  display_name: string // 显示名称，如 "User Read"
   description: string // 权限描述
   category: string // 权限分类，如 "user_management"
+  resource: string
+  action: string
+  created_at?: string
+  updated_at?: string
 }
 
 // 权限详情类型
@@ -509,6 +516,8 @@ export interface PermissionDetail {
   display_name: string
   description: string
   category: string
+  resource: string
+  action: string
   created_at: string
   updated_at: string
 }
@@ -532,9 +541,11 @@ export interface PermissionDetailResponse {
 // 创建权限请求
 export interface CreatePermissionRequest {
   name: string
-  display_name: string
+  display_name?: string
   description?: string
-  category: string
+  category?: string
+  resource?: string
+  action?: string
 }
 
 // 创建权限响应
@@ -547,6 +558,8 @@ export interface UpdatePermissionRequest {
   display_name?: string
   description?: string
   category?: string
+  resource?: string
+  action?: string
 }
 
 // 更新权限响应
