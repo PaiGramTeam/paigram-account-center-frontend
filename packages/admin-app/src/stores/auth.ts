@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@paigram/shared-components'
-import { authApi, profileApi } from '@/api'
+import { authApi, userApi } from '@/api'
 import type { LoginChallengeResponseData, LoginEmailRequest, LoginResponseData, UserStatus } from '@paigram/shared-components'
 
 interface AuthState {
@@ -67,28 +67,23 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('User ID not found')
         }
 
-        console.log('Fetching profile for user ID:', id) // 调试日志
-
-        const response = await profileApi.getProfile(id)
-
-        console.log('Profile response:', response) // 调试日志
-
-        const profile = response.data
+        const response = await userApi.getDetail(id)
+        const userDetail = response.data
 
         // 转换并保存用户信息
         userStore.setUserInfo({
-          id: profile.user_id,
-          display_name: profile.display_name,
-          primary_email: profile.primary_email,
-          avatar_url: profile.avatar_url,
-          status: profile.status as UserStatus,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at,
-          last_login_at: profile.last_login_at,
-          bio: profile.bio,
-          locale: profile.locale,
-          roles: ['admin'], // 管理员默认角色
-          permissions: ['*'], // 管理员默认权限
+          id: userDetail.id,
+          display_name: userDetail.display_name,
+          primary_email: userDetail.primary_email,
+          avatar_url: userDetail.avatar_url,
+          status: userDetail.status as UserStatus,
+          created_at: userDetail.created_at,
+          updated_at: userDetail.updated_at,
+          last_login_at: userDetail.last_login_at,
+          bio: userDetail.bio,
+          locale: userDetail.locale,
+          roles: userDetail.roles || [],
+          permissions: userDetail.permissions || [],
         })
       } catch (error) {
         console.error('Failed to fetch user profile:', error)
