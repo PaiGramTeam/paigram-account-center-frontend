@@ -16,7 +16,6 @@ import type {
   UpdateUserRequest,
   UpdateUserResponse,
   UserDetail,
-  PaginatedResponse,
   UserAuditLogItem,
   UserSecuritySummary,
   UserSessionItem,
