@@ -105,7 +105,6 @@ const handleCallback = async (): Promise<void> => {
     const callbackData: OAuthCallbackRequest = {
       code: code as string,
       state: state as string,
-      provider_account_id: '',
     }
 
     const fallbackPath = await authStore.handleOAuthCallback(provider, callbackData)

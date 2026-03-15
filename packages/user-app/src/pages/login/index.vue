@@ -62,8 +62,9 @@
             </a-form-item>
 
             <div class="mb-6 flex items-center justify-between">
-              <a-checkbox v-if="!showTwoFactorStep" v-model="rememberMe">记住我</a-checkbox>
-              <span v-else class="text-sm text-gray-500">使用验证器或备用恢复码完成本次登录</span>
+              <span class="text-sm text-gray-500">
+                {{ showTwoFactorStep ? '使用验证器或备用恢复码完成本次登录' : '登录后可在账号安全页管理设备与会话' }}
+              </span>
               <a-link @click="showTwoFactorStep ? resetTwoFactorStep() : handleForgotPassword()" class="text-sm">
                 {{ showTwoFactorStep ? '返回上一步' : '忘记密码？' }}
               </a-link>
@@ -106,14 +107,8 @@
             </a-button>
           </div>
 
-          <!-- Telegram 登录 -->
-          <div v-if="!showTwoFactorStep" class="mt-4">
-            <a-button size="large" long @click="handleTelegramLogin">
-              <template #icon>
-                <icon-send />
-              </template>
-              使用 Telegram 登录
-            </a-button>
+          <div v-if="!showTwoFactorStep" class="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Telegram 登录入口暂未开放，当前请使用邮箱密码或 Google / GitHub 登录。
           </div>
         </div>
       </div>
@@ -125,7 +120,7 @@
 import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
+import { IconGithub, IconGoogle, IconEmail, IconLock } from '@arco-design/web-vue/es/icon'
 import { authApi } from '@/api'
 import { AuthTwoFactorStep, TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
@@ -150,9 +145,6 @@ const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || ''
 const showCaptcha = ref(false)
 const showTwoFactorStep = ref(false)
 const twoFactorMessage = ref('')
-
-// 记住我
-const rememberMe = ref(false)
 
 // 加载状态
 const loading = ref(false)
@@ -279,11 +271,6 @@ const handleOAuthLogin = async (provider: string): Promise<void> => {
   } catch (_error) {
     Message.error('OAuth 登录初始化失败')
   }
-}
-
-// Telegram 登录
-const handleTelegramLogin = (): void => {
-  Message.info('Telegram 登录功能开发中...')
 }
 
 // 前往注册页

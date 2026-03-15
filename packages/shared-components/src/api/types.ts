@@ -286,12 +286,7 @@ export interface InitiateOAuthResponse {
 
 export interface OAuthCallbackRequest {
   state: string
-  provider_account_id: string
-  code?: string
-  display_name?: string
-  email?: string
-  email_verified?: boolean
-  avatar_url?: string
+  code: string
 }
 
 // Telegram Auth

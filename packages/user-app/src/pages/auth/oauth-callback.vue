@@ -104,14 +104,9 @@ const handleCallback = async (): Promise<void> => {
   }
 
   try {
-    // 构建回调请求数据
-    // 注意：根据 Swagger 定义，provider_account_id 是必需的
-    // 但在实际流程中，后端应该从 code 换取 access_token 后获取用户信息
-    // 这里我们传递 code，后端会处理剩余的 OAuth 流程
     const callbackData: OAuthCallbackRequest = {
       code: code as string,
       state: state as string,
-      provider_account_id: '', // 后端会从 OAuth provider 获取
     }
 
     // 调用 auth store 处理回调
@@ -140,7 +135,7 @@ const handleCallback = async (): Promise<void> => {
 const retry = (): void => {
   error.value = ''
   loading.value = true
-  handleCallback()
+  void handleCallback()
 }
 
 // 返回登录页
@@ -149,6 +144,6 @@ const backToLogin = (): void => {
 }
 
 onMounted(() => {
-  handleCallback()
+  void handleCallback()
 })
 </script>
