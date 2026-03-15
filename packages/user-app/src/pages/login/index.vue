@@ -23,11 +23,6 @@
             </p>
           </div>
 
-          <div v-if="showTwoFactorStep" class="mb-6 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-700">
-            <p class="font-medium text-blue-900">需要二级认证</p>
-            <p class="mt-1">{{ twoFactorMessage || '请输入身份验证器中的 6 位验证码，或使用备用恢复码继续登录。' }}</p>
-          </div>
-
           <!-- 登录表单 -->
           <a-form :model="loginForm" :rules="rules" layout="vertical" @submit="handleSubmit">
             <a-form-item field="email" label="邮箱地址">
@@ -59,26 +54,16 @@
             </a-form-item>
 
             <a-form-item v-if="showTwoFactorStep" field="totp_code" label="验证码或备用恢复码">
-              <a-input
-                v-model="loginForm.totp_code"
-                size="large"
-                placeholder="请输入 2FA 验证码"
-                allow-clear
-                maxlength="8"
-              >
-                <template #prefix>
-                  <icon-safe />
-                </template>
-              </a-input>
+              <AuthTwoFactorStep
+                v-model:code="loginForm.totp_code"
+                v-model:trust-device="loginForm.trust_device"
+                :message="twoFactorMessage"
+              />
             </a-form-item>
-
-            <div v-if="showTwoFactorStep" class="mb-6 rounded-xl bg-gray-50 px-4 py-3 text-xs leading-6 text-gray-600">
-              你可以输入身份验证器中的动态验证码，也可以输入一次性备用恢复码。
-            </div>
 
             <div class="mb-6 flex items-center justify-between">
               <a-checkbox v-if="!showTwoFactorStep" v-model="rememberMe">记住我</a-checkbox>
-              <a-checkbox v-else v-model="loginForm.trust_device">信任此设备 30 天</a-checkbox>
+              <span v-else class="text-sm text-gray-500">使用验证器或备用恢复码完成本次登录</span>
               <a-link @click="showTwoFactorStep ? resetTwoFactorStep() : handleForgotPassword()" class="text-sm">
                 {{ showTwoFactorStep ? '返回上一步' : '忘记密码？' }}
               </a-link>
@@ -140,9 +125,9 @@
 import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
-import { IconGithub, IconGoogle, IconEmail, IconLock, IconSafe, IconSend } from '@arco-design/web-vue/es/icon'
+import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
 import { authApi } from '@/api'
-import { TurnstileWidget } from '@paigram/shared-components'
+import { AuthTwoFactorStep, TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 

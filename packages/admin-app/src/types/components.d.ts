@@ -18,6 +18,7 @@ declare module 'vue' {
     ABreadcrumbItem: typeof import('@arco-design/web-vue')['BreadcrumbItem']
     AButton: typeof import('@arco-design/web-vue')['Button']
     ACard: typeof import('@arco-design/web-vue')['Card']
+    ACheckbox: typeof import('@arco-design/web-vue')['Checkbox']
     ACol: typeof import('@arco-design/web-vue')['Col']
     ADescriptions: typeof import('@arco-design/web-vue')['Descriptions']
     ADescriptionsItem: typeof import('@arco-design/web-vue')['DescriptionsItem']

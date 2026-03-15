@@ -2,11 +2,16 @@ import { defineStore } from 'pinia'
 import { Message } from '@arco-design/web-vue'
 import { useUserStore } from '@paigram/shared-components'
 import { authApi, profileApi } from '@/api'
-import type { LoginEmailRequest, UserStatus } from '@paigram/shared-components'
+import type { LoginChallengeResponseData, LoginEmailRequest, LoginResponseData, UserStatus } from '@paigram/shared-components'
 
 interface AuthState {
   loading: boolean
   loginType: 'email' | 'oauth' | 'telegram' | null
+}
+
+export interface LoginWithEmailResult {
+  status: 'success' | 'requires_totp'
+  message?: string
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -17,14 +22,19 @@ export const useAuthStore = defineStore('auth', {
 
   actions: {
     // 邮箱密码登录
-    async loginWithEmail(credentials: LoginEmailRequest): Promise<void> {
+    async loginWithEmail(credentials: LoginEmailRequest): Promise<LoginWithEmailResult> {
       this.loading = true
       const userStore = useUserStore()
 
       try {
         const response = await authApi.login(credentials)
 
-        console.log('Login response:', response) // 调试日志
+        if (isTwoFactorChallenge(response.data)) {
+          return {
+            status: 'requires_totp',
+            message: response.data.message,
+          }
+        }
 
         // 保存认证信息
         userStore.setAuthData({
@@ -37,8 +47,8 @@ export const useAuthStore = defineStore('auth', {
 
         this.loginType = 'email'
         Message.success('登录成功')
+        return { status: 'success' }
       } catch (error: unknown) {
-        console.error('Login error:', error) // 调试日志
         const err = error as { error?: string; message?: string }
         Message.error(err.error || err.message || '登录失败')
         throw error
@@ -104,3 +114,7 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 })
+
+function isTwoFactorChallenge(data: LoginResponseData | LoginChallengeResponseData): data is LoginChallengeResponseData {
+  return 'requires_totp' in data && data.requires_totp === true
+}
