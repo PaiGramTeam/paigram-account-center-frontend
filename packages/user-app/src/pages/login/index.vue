@@ -121,7 +121,6 @@ import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconGithub, IconGoogle, IconEmail, IconLock } from '@arco-design/web-vue/es/icon'
-import { authApi } from '@/api'
 import { AuthTwoFactorStep, TurnstileWidget } from '@paigram/shared-components'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
@@ -262,14 +261,12 @@ function normalizeTOTPCode(code: string | undefined): string | undefined {
 // OAuth 登录
 const handleOAuthLogin = async (provider: string): Promise<void> => {
   try {
-    const response = await authApi.initiateOAuth(provider, {
-      redirect_to: `${window.location.origin}/auth/callback/${provider}`,
-    })
+    const authURL = await authStore.initiateOAuth(provider, `${window.location.origin}/auth/callback/${provider}`)
 
     // 跳转到授权页面
-    window.location.href = response.data.auth_url
+    window.location.href = authURL
   } catch (_error) {
-    Message.error('OAuth 登录初始化失败')
+    // auth store already surfaces a user-facing error
   }
 }
 

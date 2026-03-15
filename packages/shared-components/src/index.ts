@@ -30,6 +30,7 @@ export { useMenuGeneration } from './hooks/useMenuGeneration'
 
 // Utils
 export { setupPermissionDirective } from './utils/permission'
+export { resolveAuthErrorMessage } from './utils/auth'
 
 // Locale
 export { setupI18n, changeLocale, t, locale } from './locale'

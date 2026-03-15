@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { Message } from '@arco-design/web-vue'
-import { useUserStore } from '@paigram/shared-components'
+import { resolveAuthErrorMessage, useUserStore } from '@paigram/shared-components'
 import { authApi, profileApi } from '@/api'
 import type {
   LoginEmailRequest,
@@ -57,8 +57,7 @@ export const useAuthStore = defineStore('auth', {
         Message.success('登录成功')
         return { status: 'success' }
       } catch (error: unknown) {
-        const err = error as { error?: string; message?: string }
-        Message.error(err.error || err.message || '登录失败')
+        Message.error(resolveAuthErrorMessage(error, '登录失败'))
         throw error
       } finally {
         this.loading = false
@@ -75,11 +74,7 @@ export const useAuthStore = defineStore('auth', {
           throw new Error('User ID not found')
         }
 
-        console.log('Fetching profile for user ID:', id) // 调试日志
-
         const response = await profileApi.getProfile(id)
-
-        console.log('Profile response:', response) // 调试日志
 
         const profile = response.data
 
@@ -125,8 +120,7 @@ export const useAuthStore = defineStore('auth', {
 
         return response.data
       } catch (error: unknown) {
-        const err = error as { error?: string }
-        Message.error(err.error || '注册失败')
+        Message.error(resolveAuthErrorMessage(error, '注册失败'))
         throw error
       } finally {
         this.loading = false
@@ -182,7 +176,7 @@ export const useAuthStore = defineStore('auth', {
 
         return response.data.auth_url
       } catch (error) {
-        Message.error('OAuth 初始化失败')
+        Message.error(resolveAuthErrorMessage(error, 'OAuth 初始化失败'))
         throw error
       }
     },
@@ -208,8 +202,7 @@ export const useAuthStore = defineStore('auth', {
         Message.success('登录成功')
       } catch (error) {
         console.error('OAuth callback error:', error)
-        const err = error as { error?: string; message?: string }
-        Message.error(err.error || err.message || 'OAuth 登录失败')
+        Message.error(resolveAuthErrorMessage(error, 'OAuth 登录失败'))
         throw error
       } finally {
         this.loading = false

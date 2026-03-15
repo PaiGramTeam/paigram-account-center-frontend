@@ -203,7 +203,7 @@ const handleOAuthLogin = async (provider: string): Promise<void> => {
     const authURL = await authStore.initiateOAuth(provider, callbackURL.toString())
     window.location.href = authURL
   } catch (_error) {
-    Message.error('OAuth 登录初始化失败')
+    // auth store already surfaces a user-facing error
   }
 }
 

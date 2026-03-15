@@ -3,11 +3,15 @@ import { Message } from '@arco-design/web-vue'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse, ApiError } from './types'
 
-interface NormalizedApiError {
+export interface NormalizedApiError {
   error?: string
   code?: string
   message?: string
   details?: Record<string, unknown>
+}
+
+export interface RequestOptions extends AxiosRequestConfig {
+  skipErrorToast?: boolean
 }
 
 export interface RequestConfig {
@@ -63,6 +67,7 @@ export function createRequest(config: RequestConfig = {}) {
     },
     async (error) => {
       const { response, config } = error
+      const requestConfig = (config || {}) as RequestOptions
 
       if (response) {
         const { status, data } = response
@@ -102,12 +107,16 @@ export function createRequest(config: RequestConfig = {}) {
         const errorData = normalizeApiError(data as ApiError)
         const errorMessage = errorData.message || errorData.error || getDefaultErrorMessage(status)
 
-        Message.error(errorMessage)
+        if (!requestConfig.skipErrorToast) {
+          Message.error(errorMessage)
+        }
         return Promise.reject(errorData)
       }
 
       // 网络错误或超时
-      Message.error('网络连接异常，请稍后重试')
+      if (!requestConfig.skipErrorToast) {
+        Message.error('网络连接异常，请稍后重试')
+      }
       return Promise.reject(error)
     }
   )
@@ -116,29 +125,29 @@ export function createRequest(config: RequestConfig = {}) {
   return {
     instance,
 
-    get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    get<T = unknown>(url: string, config?: RequestOptions): Promise<ApiResponse<T>> {
       return instance.get(url, config)
     },
 
-    post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    post<T = unknown>(url: string, data?: unknown, config?: RequestOptions): Promise<ApiResponse<T>> {
       return instance.post(url, data, config)
     },
 
-    put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    put<T = unknown>(url: string, data?: unknown, config?: RequestOptions): Promise<ApiResponse<T>> {
       return instance.put(url, data, config)
     },
 
-    patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    patch<T = unknown>(url: string, data?: unknown, config?: RequestOptions): Promise<ApiResponse<T>> {
       return instance.patch(url, data, config)
     },
 
-    delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    delete<T = unknown>(url: string, config?: RequestOptions): Promise<ApiResponse<T>> {
       return instance.delete(url, config)
     },
   }
 }
 
-function normalizeApiError(error: ApiError | undefined): NormalizedApiError {
+export function normalizeApiError(error: ApiError | undefined): NormalizedApiError {
   if (!error) {
     return { message: '请求失败' }
   }
