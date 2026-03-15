@@ -3,6 +3,13 @@ import { Message } from '@arco-design/web-vue'
 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
 import type { ApiResponse, ApiError } from './types'
 
+interface NormalizedApiError {
+  error?: string
+  code?: string
+  message?: string
+  details?: Record<string, unknown>
+}
+
 export interface RequestConfig {
   baseURL?: string
   timeout?: number
@@ -92,8 +99,8 @@ export function createRequest(config: RequestConfig = {}) {
         }
 
         // 处理其他错误
-        const errorData = data as ApiError
-        const errorMessage = errorData?.error || getDefaultErrorMessage(status)
+        const errorData = normalizeApiError(data as ApiError)
+        const errorMessage = errorData.message || errorData.error || getDefaultErrorMessage(status)
 
         Message.error(errorMessage)
         return Promise.reject(errorData)
@@ -128,6 +135,37 @@ export function createRequest(config: RequestConfig = {}) {
     delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
       return instance.delete(url, config)
     },
+  }
+}
+
+function normalizeApiError(error: ApiError | undefined): NormalizedApiError {
+  if (!error) {
+    return { message: '请求失败' }
+  }
+
+  if (typeof error.error === 'string') {
+    return {
+      code: error.code,
+      error: error.error,
+      message: error.message || error.error,
+      details: error.details,
+    }
+  }
+
+  if (error.error && typeof error.error === 'object') {
+    return {
+      code: error.error.code || error.code,
+      error: error.error.message || error.message,
+      message: error.error.message || error.message,
+      details: error.error.details || error.details,
+    }
+  }
+
+  return {
+    code: error.code,
+    error: error.message,
+    message: error.message,
+    details: error.details,
   }
 }
 

@@ -6,10 +6,17 @@ export interface ApiResponse<T = unknown> {
   timestamp?: number
 }
 
+export interface ApiErrorDetail {
+  code?: string
+  message?: string
+  details?: Record<string, unknown>
+}
+
 // API 错误响应
 export interface ApiError {
-  error: string
+  error?: string | ApiErrorDetail
   code?: string
+  message?: string
   details?: Record<string, unknown>
 }
 
@@ -17,6 +24,7 @@ export interface ApiError {
 export interface LoginEmailRequest {
   email: string
   password: string
+  captcha_token?: string
 }
 
 export interface LoginResponseData {
@@ -156,6 +164,7 @@ export interface RegisterEmailRequest {
   password: string
   display_name: string
   locale?: string
+  captcha_token?: string
 }
 
 // 注册响应

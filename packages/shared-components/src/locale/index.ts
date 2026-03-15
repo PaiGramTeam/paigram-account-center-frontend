@@ -22,8 +22,8 @@ export const setupI18n = (app: App) => {
   app.use(i18n)
 }
 
-export const t = i18n.global.t
-export const locale = i18n.global.locale
+export const t: typeof i18n.global.t = i18n.global.t
+export const locale: typeof i18n.global.locale = i18n.global.locale
 
 export const changeLocale = (locale: LocaleType) => {
   i18n.global.locale.value = locale

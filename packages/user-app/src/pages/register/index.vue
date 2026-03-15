@@ -25,6 +25,16 @@
             <a-option value="ja_JP">日本語</a-option>
           </a-select>
         </a-form-item>
+        <a-form-item v-if="turnstileEnabled" label="安全验证">
+          <TurnstileWidget
+            ref="turnstileRef"
+            :site-key="turnstileSiteKey"
+            action="register"
+            @token="handleCaptchaToken"
+            @expired="handleCaptchaExpired"
+            @error="handleCaptchaError"
+          />
+        </a-form-item>
         <a-form-item>
           <a-button type="primary" html-type="submit" long :loading="loading">注册</a-button>
         </a-form-item>
@@ -58,12 +68,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconCheckCircleFill } from '@arco-design/web-vue/es/icon'
 import type { FormInstance } from '@arco-design/web-vue'
 import { authApi } from '@/api'
+import TurnstileWidget from '@/components/TurnstileWidget.vue'
 import type { RegisterEmailRequest } from '@paigram/shared-components'
 
 const router = useRouter()
@@ -71,6 +82,10 @@ const loading = ref(false)
 const formRef = ref<FormInstance>()
 const successModalVisible = ref(false)
 const requiresEmailVerification = ref(false)
+const captchaToken = ref('')
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || ''
+const turnstileEnabled = Boolean(turnstileSiteKey)
 
 const form = reactive<RegisterEmailRequest & { confirmPassword: string }>({
   display_name: '',
@@ -117,6 +132,11 @@ const handleSubmit = async (): Promise<void> => {
   const valid = await formRef.value?.validate()
   if (!valid) return
 
+  if (turnstileEnabled && !captchaToken.value) {
+    Message.warning('请先完成安全验证')
+    return
+  }
+
   loading.value = true
   try {
     const registerData: RegisterEmailRequest = {
@@ -124,6 +144,7 @@ const handleSubmit = async (): Promise<void> => {
       email: form.email,
       password: form.password,
       locale: form.locale,
+      captcha_token: captchaToken.value || undefined,
     }
 
     const response = await authApi.register(registerData)
@@ -134,12 +155,27 @@ const handleSubmit = async (): Promise<void> => {
     // 显示成功提示
     successModalVisible.value = true
   } catch (error: unknown) {
+    captchaToken.value = ''
+    turnstileRef.value?.reset()
     console.error('注册失败:', error)
     const errorMessage = error instanceof Error ? error.message : '注册失败，请稍后重试'
     Message.error(errorMessage)
   } finally {
     loading.value = false
   }
+}
+
+const handleCaptchaToken = (token: string): void => {
+  captchaToken.value = token
+}
+
+const handleCaptchaExpired = (): void => {
+  captchaToken.value = ''
+}
+
+const handleCaptchaError = (message: string): void => {
+  captchaToken.value = ''
+  Message.warning(message)
 }
 
 const goToLogin = (): void => {

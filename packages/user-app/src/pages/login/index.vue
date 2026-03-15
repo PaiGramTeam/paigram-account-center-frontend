@@ -46,6 +46,17 @@
               <a-link @click="handleForgotPassword" class="text-sm"> 忘记密码？ </a-link>
             </div>
 
+            <a-form-item v-if="showCaptcha" label="安全验证">
+              <TurnstileWidget
+                ref="turnstileRef"
+                :site-key="turnstileSiteKey"
+                action="login"
+                @token="handleCaptchaToken"
+                @expired="handleCaptchaExpired"
+                @error="handleCaptchaError"
+              />
+            </a-form-item>
+
             <a-button type="primary" size="large" long html-type="submit" :loading="loading"> 登录 </a-button>
           </a-form>
 
@@ -86,11 +97,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import { IconGithub, IconGoogle, IconEmail, IconLock, IconSend } from '@arco-design/web-vue/es/icon'
 import { authApi } from '@/api'
+import TurnstileWidget from '@/components/TurnstileWidget.vue'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginEmailRequest } from '@paigram/shared-components'
 
@@ -102,7 +114,13 @@ const authStore = useAuthStore()
 const loginForm = reactive<LoginEmailRequest>({
   email: '',
   password: '',
+  captcha_token: undefined,
 })
+
+const turnstileRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
+const captchaToken = ref('')
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || ''
+const showCaptcha = ref(false)
 
 // 记住我
 const rememberMe = ref(false)
@@ -137,8 +155,21 @@ interface FormSubmitData {
 const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> => {
   if (errors) return
 
+  if (showCaptcha.value) {
+    if (!turnstileSiteKey) {
+      Message.error('当前站点未配置安全验证，请联系管理员')
+      return
+    }
+    if (!captchaToken.value) {
+      Message.warning('请先完成安全验证')
+      return
+    }
+  }
+
   loading.value = true
   try {
+    values.captcha_token = showCaptcha.value ? captchaToken.value : undefined
+
     // 使用 authStore 的登录方法，它会自动处理 token 保存和用户信息获取
     await authStore.loginWithEmail(values)
 
@@ -146,11 +177,37 @@ const handleSubmit = async ({ values, errors }: FormSubmitData): Promise<void> =
     const redirect = route.query.redirect as string
     await router.push(redirect || '/dashboard')
   } catch (error: unknown) {
-    // 错误信息已在 authStore 中处理
     console.error('Login failed:', error)
+    if (isCaptchaError(error)) {
+      showCaptcha.value = true
+      captchaToken.value = ''
+      await nextTick()
+      turnstileRef.value?.reset()
+    }
   } finally {
     loading.value = false
   }
+}
+
+const handleCaptchaToken = (token: string): void => {
+  captchaToken.value = token
+  loginForm.captcha_token = token
+}
+
+const handleCaptchaExpired = (): void => {
+  captchaToken.value = ''
+  loginForm.captcha_token = undefined
+}
+
+const handleCaptchaError = (message: string): void => {
+  captchaToken.value = ''
+  loginForm.captcha_token = undefined
+  Message.warning(message)
+}
+
+function isCaptchaError(error: unknown): boolean {
+  const errorCode = (error as { code?: string })?.code
+  return errorCode === 'CAPTCHA_REQUIRED' || errorCode === 'CAPTCHA_FAILED'
 }
 
 // OAuth 登录
