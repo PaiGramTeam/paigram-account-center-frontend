@@ -74,7 +74,7 @@ export function createRoleApi(request: ReturnType<typeof createRequest>) {
 
     // 获取角色详情
     async getDetail(id: number | string): Promise<RoleDetailResponse> {
-      const response = await request.get<{ data: BackendRole }>(`/roles/${id}`)
+      const response = await request.get<BackendRole>(`/roles/${id}`)
       return {
         data: mapRoleDetail(response.data),
       }

@@ -4,8 +4,6 @@ import type {
   PermissionListResponse,
   CreatePermissionRequest,
   CreatePermissionResponse,
-  UpdatePermissionRequest,
-  UpdatePermissionResponse,
   DeletePermissionResponse,
   PermissionDetailResponse,
 } from '../types'
@@ -42,7 +40,7 @@ function mapPermission(permission: BackendPermission) {
   }
 }
 
-function normalizePermissionPayload(data: CreatePermissionRequest | UpdatePermissionRequest) {
+function normalizePermissionPayload(data: CreatePermissionRequest) {
   const resource = data.resource || data.name.split(':')[0] || ''
   const action = data.action || data.name.split(':')[1] || ''
 
@@ -76,7 +74,7 @@ export function createPermissionApi(request: ReturnType<typeof createRequest>) {
 
     // 获取权限详情
     async getDetail(id: number | string): Promise<PermissionDetailResponse> {
-      const response = await request.get<{ data: BackendPermission }>(`/permissions/${id}`)
+      const response = await request.get<BackendPermission>(`/permissions/${id}`)
       return {
         data: mapPermission(response.data),
       }
@@ -85,11 +83,6 @@ export function createPermissionApi(request: ReturnType<typeof createRequest>) {
     // 创建权限
     async create(data: CreatePermissionRequest): Promise<CreatePermissionResponse> {
       return request.post('/permissions', normalizePermissionPayload(data))
-    },
-
-    // 更新权限
-    async update(id: number | string, data: UpdatePermissionRequest): Promise<UpdatePermissionResponse> {
-      return request.put(`/permissions/${id}`, normalizePermissionPayload(data))
     },
 
     // 删除权限
